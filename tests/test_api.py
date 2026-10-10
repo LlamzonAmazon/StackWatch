@@ -12,11 +12,12 @@ pytest.importorskip("clickhouse_connect", reason="project deps not installed; se
 
 import app.config as config  # noqa: E402
 import app.main as main
-from app import orchestrator
+from app import auth, orchestrator
 from app.schema import Target
 
 PINNED = "t_juiceshop"
 RUN_ID = "r_20261009_120000_abcd"
+API_KEY = "k" * 40
 
 
 @pytest.fixture
@@ -34,6 +35,14 @@ def demo_cfg(monkeypatch):
     monkeypatch.setattr(config, "_demo_config", cfg)
     monkeypatch.setattr(config, "ALLOWED_REPO_ROOTS", [(config.PROJECT_ROOT / "demo").resolve()])
     return cfg
+
+
+@pytest.fixture(autouse=True)
+def api_auth(monkeypatch):
+    monkeypatch.setattr(config, "API_KEYS", [API_KEY])
+    monkeypatch.setattr(config, "AUTH_DISABLED", False)
+    monkeypatch.setattr(config, "RATE_LIMIT_PER_MINUTE", 1000)
+    auth.limiter.reset()
 
 
 @pytest.fixture(autouse=True)
@@ -93,7 +102,8 @@ def start_run(monkeypatch):
 @pytest.fixture
 async def client(ch):
     transport = httpx.ASGITransport(app=main.app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
+    async with httpx.AsyncClient(transport=transport, base_url="http://test",
+                                 headers={"X-API-Key": API_KEY}) as c:
         yield c
 
 

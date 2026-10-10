@@ -8,12 +8,13 @@ from datetime import datetime
 from typing import Annotated
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Response
 from fastapi import Path as PathParam
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
 from app import config, orchestrator, store
+from app.auth import log_auth_config, rate_limit, require_api_key
 from app.config import (
     DEMO_MODE,
     PROJECT_ROOT,
@@ -35,6 +36,7 @@ from app.verify.runtime import deploy_url_refusal
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    log_auth_config()
     watcher = asyncio.create_task(orchestrator.watcher_loop())
     try:
         yield
@@ -43,6 +45,10 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Continuous Exposure Agent", version="0.1.0", lifespan=lifespan)
+# Every /api route is registered on this router, so a new route is protected by default.
+# Only the health check is mounted on the app directly.
+api = APIRouter(dependencies=[Depends(require_api_key)])
+RATE_LIMITED = [Depends(rate_limit)]
 
 
 TARGET_ID_PATTERN = r"^t_[a-z0-9_]{1,40}$"
@@ -131,7 +137,7 @@ def _check_pinned_target(target_id: str, req: CreateTargetRequest, repo: str | N
             raise HTTPException(403, refusal)
 
 
-@app.post("/api/targets")
+@api.post("/api/targets", dependencies=RATE_LIMITED)
 async def create_target(req: CreateTargetRequest):
     repo = None
     if req.repo is not None:
@@ -173,7 +179,7 @@ async def create_target(req: CreateTargetRequest):
     return {"target_id": target_id, "authorized": authorized, "authorization_reason": reason}
 
 
-@app.post("/api/runs")
+@api.post("/api/runs", dependencies=RATE_LIMITED)
 async def start_run(req: StartRunRequest):
     target = _get_target(req.target_id)
     if not target:
@@ -182,7 +188,7 @@ async def start_run(req: StartRunRequest):
     return {**result, "target_id": req.target_id}
 
 
-@app.get("/api/runs/{run_id}")
+@api.get("/api/runs/{run_id}")
 async def get_run(run_id: RunIdPath):
     run = store.get_run(run_id)
     if not run:
@@ -195,7 +201,7 @@ def _rows_by_key(query: str, params: dict) -> dict:
     return {row[0]: row[1:] for row in result.result_rows}
 
 
-@app.get("/api/runs/{run_id}/report")
+@api.get("/api/runs/{run_id}/report")
 async def get_report(run_id: RunIdPath):
     """Ranked findings with evidence chains."""
     run = store.get_run(run_id)
@@ -277,7 +283,7 @@ async def get_report(run_id: RunIdPath):
     return {"run_id": run_id, "state": run["state"], "summary": summary, "findings": findings}
 
 
-@app.get("/api/runs/{run_id}/knowledge")
+@api.get("/api/runs/{run_id}/knowledge")
 async def get_knowledge(run_id: RunIdPath):
     """Latest knowledge base snapshot for a public-domain run."""
     kb = get_live(run_id)
@@ -322,7 +328,7 @@ def _senso_status(kb: KnowledgeBase) -> dict:
             "error": s.get("error"), "ingested_ts": s.get("ingested_ts")}
 
 
-@app.get("/api/runs/{run_id}/senso")
+@api.get("/api/runs/{run_id}/senso")
 async def get_senso_status(run_id: RunIdPath):
     """Whether this run's knowledge base is in Senso yet. Polls Senso while it is ingesting."""
     kb = await _load_kb(run_id)
@@ -333,7 +339,7 @@ async def get_senso_status(run_id: RunIdPath):
     return _senso_status(kb)
 
 
-@app.post("/api/runs/{run_id}/ask")
+@api.post("/api/runs/{run_id}/ask", dependencies=RATE_LIMITED)
 async def ask_knowledge(run_id: RunIdPath, req: AskRequest):
     """Answer a question from this run's knowledge base document in Senso."""
     if not senso.is_configured():
@@ -351,28 +357,28 @@ async def ask_knowledge(run_id: RunIdPath, req: AskRequest):
     return {**result, "powered_by": "senso", "document": kb.senso.get("title")}
 
 
-@app.get("/api/runs/{run_id}/vulnscan")
+@api.get("/api/runs/{run_id}/vulnscan")
 async def get_vulnscan(run_id: RunIdPath):
     """Deep dependency / secret / misconfiguration findings for a run."""
     from app import scanner
     return {"run_id": run_id, "findings": scanner.get_scan_results(run_id, "vulnscan") or []}
 
 
-@app.get("/api/runs/{run_id}/endpoints")
+@api.get("/api/runs/{run_id}/endpoints")
 async def get_endpoints(run_id: RunIdPath):
     """Enumerated attack-surface endpoints for a run."""
     from app import scanner
     return {"run_id": run_id, "endpoints": scanner.get_scan_results(run_id, "endpoints") or []}
 
 
-@app.get("/api/runs/{run_id}/threats")
+@api.get("/api/runs/{run_id}/threats")
 async def get_threats(run_id: RunIdPath):
     """Correlated threat patterns for a run."""
     from app import scanner
     return {"run_id": run_id, "threats": scanner.get_scan_results(run_id, "threats") or []}
 
 
-@app.get("/api/targets/{target_id}/changes")
+@api.get("/api/targets/{target_id}/changes")
 async def get_changes(target_id: TargetIdPath):
     """Diff between the latest two complete runs."""
     result = store.get_client().query(
@@ -403,7 +409,7 @@ async def get_changes(target_id: TargetIdPath):
     return {"changes": changes, "current_run_id": current_run_id, "previous_run_id": prev_run_id}
 
 
-@app.get("/api/events")
+@api.get("/api/events")
 async def get_events(
     target_id: Annotated[str, Query(pattern=TARGET_ID_PATTERN)],
     since: Annotated[str | None, Query(max_length=64)] = None,
@@ -417,7 +423,7 @@ async def get_events(
     return store.get_events(target_id, since_dt)
 
 
-@app.get("/api/stats")
+@api.get("/api/stats")
 async def get_stats():
     stats = store.get_corpus_stats()
     counts = store.get_record_counts()
@@ -431,7 +437,7 @@ async def get_stats():
     }
 
 
-@app.post("/api/advisories/replay")
+@api.post("/api/advisories/replay", dependencies=RATE_LIMITED)
 async def replay_advisory(req: ReplayRequest):
     if not DEMO_MODE:
         raise HTTPException(404, "Not found")
@@ -469,4 +475,5 @@ async def health():
     return {"status": "ok" if ch_ok else "degraded", "clickhouse": ch_ok, "demo_mode": DEMO_MODE}
 
 
+app.include_router(api)
 app.mount("/", StaticFiles(directory=PROJECT_ROOT / "web", html=True), name="web")

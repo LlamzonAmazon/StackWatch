@@ -96,3 +96,8 @@ CACHE_ONLY = get_env_bool("CACHE_ONLY")
 ALLOWED_REPO_ROOTS = [
     resolve_repo_path(p) for p in (get_env("ALLOWED_REPO_ROOTS") or "demo").split(os.pathsep) if p
 ]
+# API auth: comma-separated keys. With none set, protected routes fail closed (503)
+# unless STACKWATCH_AUTH_DISABLED=1 is set for local development.
+API_KEYS = [k.strip() for k in (get_env("STACKWATCH_API_KEYS") or "").split(",") if k.strip()]
+AUTH_DISABLED = get_env_bool("STACKWATCH_AUTH_DISABLED")
+RATE_LIMIT_PER_MINUTE = get_env_int("STACKWATCH_RATE_LIMIT_PER_MINUTE", 20)

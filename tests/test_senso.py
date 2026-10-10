@@ -13,7 +13,7 @@ if "clickhouse_connect" not in sys.modules:
 
 from fastapi.testclient import TestClient
 
-from app import main, orchestrator
+from app import auth, config, main, orchestrator
 from app.integrations import senso
 from app.recon import runner
 from app.recon.kb import Fact, IntelHit, KnowledgeBase, Subdomain, Tech
@@ -208,8 +208,12 @@ def test_refresh_state_marks_ready(keyed, fake):
 
 
 @pytest.fixture
-def api():
-    return TestClient(main.app)
+def api(monkeypatch):
+    key = "s" * 40
+    monkeypatch.setattr(config, "API_KEYS", [key])
+    monkeypatch.setattr(config, "AUTH_DISABLED", False)
+    auth.limiter.reset()
+    return TestClient(main.app, headers={"X-API-Key": key})
 
 
 def test_ask_requires_configuration(no_key, api):

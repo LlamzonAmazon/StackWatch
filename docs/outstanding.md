@@ -8,7 +8,7 @@ Status: `open`, `partial`, `done`.
 
 | # | Item | Status |
 |---|------|--------|
-| 1 | **No authentication on the API.** Anyone who can reach a hosted instance can make the server scan and fetch arbitrary domains: an open, SSRF-capable proxy. Add auth and rate limiting before any public link goes on a resume. Check whether a teammate's hosted instance from the event is still running. See audit H-3 and M-5. | open |
+| 1 | **No authentication on the API.** Anyone who can reach a hosted instance can make the server scan and fetch arbitrary domains: an open, SSRF-capable proxy. Add auth and rate limiting before any public link goes on a resume. Check whether a teammate's hosted instance from the event is still running. See audit H-3 and M-5. | done: API key on every `/api` route except health, fail-closed, plus per-IP rate limiting on scan and fetch routes (`app/auth.py`). Still check the teammate's hosted instance. |
 | 2 | **Hardcoded ClickHouse password** in `scripts/schema.sql`. | done: the runtime user is now created by `scripts/apply_schema.py` from `CLICKHOUSE_USER` / `CLICKHOUSE_PASSWORD`, and the old value never entered this repo's history. Rotate it anywhere it was used. |
 | 3 | **Review the pentest report and security audit before going public.** | done: the Juice Shop pentest report (exploit write-ups, run-specific) was dropped in the migration. The self-audit is kept as [security-audit.md](security-audit.md); its open findings are public by design. |
 

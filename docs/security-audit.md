@@ -10,13 +10,13 @@
 |-----|----------|---------|--------|
 | H-1 | High     | Target ID spoofing and hijacking through a caller-chosen `target_id` | **Fixed** |
 | H-2 | High     | `repo` lets a caller point discovery at any server path (filesystem read, `copytree` DoS, `npm` run on attacker-chosen dir) | **Fixed** |
-| H-3 | High     | No authentication on any endpoint; guessable run IDs give IDOR on reports and events | Open |
+| H-3 | High     | No authentication on any endpoint; guessable run IDs give IDOR on reports and events | **Fixed** (single-operator API key) |
 | H-4 | High     | ClickHouse is published on all interfaces with a passwordless `default` user that has access management enabled | Partial (ports now bound to localhost) |
 | M-1 | Medium   | No validation or size limits on `domain`, `deploy_url`, `repo`, `advisory_id`, or path and query IDs | **Fixed** |
 | M-2 | Medium   | SSRF hardening gaps in `verify/runtime.py`: scheme, credentials, malformed port crash, implicit redirects | **Fixed** |
 | M-3 | Medium   | Prerelease builds of a fix version are reported as not affected (false negative) | Open (xfail test) |
 | M-4 | Medium   | DNS-rebinding TOCTOU in `discovery/net.safe_fetch`; incomplete blocklist | Open |
-| M-5 | Medium   | Unbounded resource use: target creation, polling fan-out, no rate limiting | Open |
+| M-5 | Medium   | Unbounded resource use: target creation, polling fan-out, no rate limiting | Partial (per-IP rate limit) |
 | L-1 | Low      | Information disclosure through the event feed and `/api/stats` | Open |
 | L-2 | Low      | Callers can forge the run `trigger` (audit-trail integrity) | Open |
 | L-3 | Low      | Demo replay writes a cwd-relative `config/demo.yaml`, with no lock | Open |
@@ -80,7 +80,7 @@ What is already done well:
 
 **Operator note:** to scan repos outside `demo/`, set `ALLOWED_REPO_ROOTS`, for example `ALLOWED_REPO_ROOTS=demo:/srv/repos`.
 
-## H-3: No authentication; IDOR on findings (Open)
+## H-3: No authentication; IDOR on findings (Fixed)
 
 **Where:** every route in `app/main.py`
 
@@ -91,6 +91,8 @@ Anyone who can reach the port can create targets, start runs, read any target's 
 - Record an owner on each target and check it on every `target_id` and `run_id` lookup.
 - Generate run IDs with `uuid4().hex`.
 - Bind uvicorn to `127.0.0.1` for demos.
+
+**Fix:** every `/api` route except `/api/health` is registered on a router that depends on `app/auth.py:require_api_key`, so new routes are protected by default. Keys come from `STACKWATCH_API_KEYS` (at least 32 characters) and are compared as SHA-256 digests with `hmac.compare_digest`. With no usable key the API fails closed with 503; `STACKWATCH_AUTH_DISABLED=1` is the explicit local opt-out. Every key holder is the operator (see goals: not multi-tenant), so per-target owner checks are not needed and guessable run IDs are no longer reachable without a key. `tests/test_auth.py` sends bad keys to every documented route.
 
 ## H-4: ClickHouse exposed with no password (Open)
 
@@ -172,7 +174,7 @@ The blocklist also misses `198.18.0.0/15`, `192.0.0.0/24`, NAT64 `64:ff9b::/96`,
 - Connect to the IP that was validated, sending the original `Host` header and SNI. For example, use a custom `httpx` transport or pass a pinned-IP `local_address` resolver.
 - Replace the hand-written list with `not ip.is_global`.
 
-## M-5: Unbounded resource consumption (Open)
+## M-5: Unbounded resource consumption (Partial)
 
 **Problems:**
 - `orchestrator._targets` grows without limit, and the watcher polls every non-public target every `POLL_INTERVAL_SECONDS`. Creating many targets therefore amplifies outbound OSV traffic and ClickHouse writes.
@@ -183,6 +185,8 @@ The blocklist also misses `198.18.0.0/15`, `192.0.0.0/24`, NAT64 `64:ff9b::/96`,
 - Add per-client rate limiting, for example with `slowapi`.
 - Cap total targets and concurrent runs, using a global semaphore around `run_pipeline`.
 - Cap the size of the `copytree` and skip `.git`.
+
+**Partial fix:** `app/auth.py:rate_limit` applies a sliding-window limit per client IP (IPv6 by /64) to the routes that start outbound or expensive work: target creation, runs, ask and replay. Default 20 per minute (`STACKWATCH_RATE_LIMIT_PER_MINUTE`). It keys on the socket peer, not `X-Forwarded-For`, and counts per process. Target and run caps are still open.
 
 ## L-1: Information disclosure (Open)
 

@@ -38,7 +38,7 @@ Requires Python 3.12, [uv](https://docs.astral.sh/uv/), Docker, Node (for lockfi
 
 ```bash
 uv venv --python 3.12 && uv pip install -r pyproject.toml
-cp .env.example .env            # fill in ClickHouse credentials at minimum
+cp .env.example .env            # fill in ClickHouse credentials and STACKWATCH_API_KEYS
 set -a; source .env; set +a
 scripts/setup_demo.sh           # clones OWASP Juice Shop, starts ClickHouse, applies schema, loads OSV
 DEMO_MODE=1 .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 3003
@@ -50,7 +50,8 @@ Tests: `.venv/bin/python -m pytest -q` (no ClickHouse or network needed).
 
 ## Security model
 
-- **The API has no authentication yet.** Bind it to localhost. It fetches arbitrary domains on request, so a public instance is an SSRF-capable proxy. This is item 1 in [docs/outstanding.md](docs/outstanding.md).
+- **Every `/api` route except `/api/health` needs an `X-API-Key` header.** Set `STACKWATCH_API_KEYS` (comma-separated, 32+ characters, e.g. `openssl rand -hex 32`); the console prompts for it once per tab. With no key set the API answers 503. `STACKWATCH_AUTH_DISABLED=1` turns auth off for local use only.
+- Routes that trigger outbound or expensive work (targets, runs, ask, replay) are rate limited per client IP, 20 per minute by default. The limit is per process and keys on the socket address, so behind a reverse proxy all callers share one bucket.
 - Outbound fetches go through `safe_fetch`, which blocks private ranges, re-validates every redirect hop and caps response size.
 - Active checks (Semgrep, runtime probes) run only against targets pinned in `config/demo.yaml`. Public domains get passive recon only.
 - ClickHouse queries that take user input are parameterized. The runtime database user has `INSERT` and `SELECT` only, with credentials from the environment.
@@ -72,7 +73,7 @@ The full self-audit is in [docs/security-audit.md](docs/security-audit.md).
 
 ## Status
 
-Runs end to end on local infrastructure. Not deployed. [docs/outstanding.md](docs/outstanding.md) lists what is left, starting with API authentication and the CISA KEV, NVD and EPSS cross-reference.
+Runs end to end on local infrastructure. Not deployed. [docs/outstanding.md](docs/outstanding.md) lists what is left, starting with the CISA KEV, NVD and EPSS cross-reference.
 
 ## Credits
 

@@ -881,20 +881,46 @@ $('demo-btn').addEventListener('click', async () => {
 
 // ---- Helpers ----
 
-async function get(url) {
-  const r = await fetch(url);
+// The API key lives in sessionStorage, so it is dropped when the tab closes.
+const KEY_STORE = 'stackwatch.apiKey';
+let keyPrompt = null;
+
+function readKey() {
+  try { return sessionStorage.getItem(KEY_STORE) || ''; } catch { return ''; }
+}
+
+// Parallel requests that all hit 401 share one prompt.
+function askForKey() {
+  keyPrompt ??= Promise.resolve().then(() => {
+    const key = (prompt('StackWatch API key:') || '').trim();
+    try { key ? sessionStorage.setItem(KEY_STORE, key) : sessionStorage.removeItem(KEY_STORE); } catch {}
+    keyPrompt = null;
+    return key;
+  });
+  return keyPrompt;
+}
+
+async function api(url, init = {}) {
+  const send = key => fetch(url, { ...init, headers: { ...init.headers, 'X-API-Key': key } });
+  let r = await send(readKey());
+  if (r.status === 401) {
+    const key = await askForKey();
+    if (key) r = await send(key);
+  }
   if (!r.ok) throw new Error(r.status);
   return r.json();
 }
 
-async function post(url, body) {
-  const r = await fetch(url, {
+function get(url) {
+  return api(url);
+}
+
+function post(url, body) {
+  return api(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!r.ok) throw new Error(r.status);
-  return r.json();
 }
 
 // The API returns naive UTC timestamps; pin them to UTC before formatting locally.
