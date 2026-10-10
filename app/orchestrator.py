@@ -303,6 +303,90 @@ def _posture_rows(hits: list, target: Target, run_id: str) -> tuple[list, list, 
     return list(items.values()), advs, cands, vers
 
 
+def _record_nvd(run_id: str, emit: Emit) -> list:
+    """NVD matches for the fingerprinted server software of a public-domain run."""
+    from app.intel import nvd
+    from app.recon.runner import get_live, save
+
+    kb = get_live(run_id)
+    if not kb:
+        return []
+    matches, kb.coverage["nvd"] = nvd.match_products(kb.stack, emit)
+    save(kb, emit)
+    return matches
+
+
+def _mirror_nvd(run_id: str, matches: list, table, emit: Emit) -> None:
+    """Mirror NVD matches, with their KEV and EPSS signals, into the public-domain KB."""
+    from app.intel.threat import IntelTable, intel_for
+    from app.recon.kb import IntelHit
+    from app.recon.runner import get_live, save
+
+    kb = get_live(run_id)
+    if not kb or not matches:
+        return
+    table = table or IntelTable()
+    for m in matches:
+        ti = intel_for([m.cve_id], table)
+        kb.intel.append(IntelHit(
+            source="nvd", id=m.cve_id, title=m.summary[:160], tech=m.name, severity=m.severity,
+            kev=ti.kev, kev_ransomware=bool(ti.kev_ransomware), epss=ti.epss,
+            epss_percentile=ti.epss_percentile, match=m.match, url=m.url,
+            detail=f"{m.name} {m.version} is within the affected range {m.affected_range}",
+            fixed_version=m.fixed_version))
+    kb.coverage.setdefault("kev", "ok" if table.kev is not None else "failed")
+    kb.coverage.setdefault("epss", "ok" if table.epss is not None else "failed")
+    save(kb, emit)
+
+
+def _nvd_rows(matches: list, run_id: str, target: Target) -> tuple[list, list, list, list]:
+    """Store NVD matches as stack item, advisory, candidate and a 'present' verification, the
+    same four rows OSV matches and posture findings produce, so /report ranks them together."""
+    from app.ids import candidate_id, stack_item_id, verification_id
+    from app.schema import Candidate, Evidence, Verification
+
+    def parse(ts):
+        try:
+            return datetime.fromisoformat(ts) if ts else None
+        except ValueError:
+            return None
+
+    items, advs, cands, vers = {}, [], [], []
+    for m in matches:
+        pkg = f"{m.vendor}:{m.product}"
+        sid = stack_item_id(target.target_id, "cpe", pkg, m.version)
+        url = m.source_url if m.source_url.startswith(("http://", "https://")) else None
+        items.setdefault(sid, StackItem(
+            id=sid, run_id=run_id, target_id=target.target_id, ecosystem="cpe", package=pkg,
+            name=m.name, version=m.version, confidence=m.confidence, status="inferred",
+            source_url=url, evidence=m.evidence))
+        advs.append(Advisory(
+            advisory_id=m.cve_id, ecosystem="cpe", package=pkg, severity=m.severity,
+            cvss_vector=m.cvss_vector, summary=m.summary[:300], details=m.summary[:8000],
+            cwe_ids=m.cwes, published=parse(m.published), modified=parse(m.modified),
+            source="nvd", source_url=m.url))
+        cid = candidate_id(sid, m.cve_id)
+        cands.append(Candidate(
+            id=cid, run_id=run_id, target_id=target.target_id, stack_item_id=sid,
+            advisory_id=m.cve_id, advisory_url=m.url, affected_range=m.affected_range,
+            fixed_version=m.fixed_version, match_type=m.match,
+            reason=f"{m.name} {m.version} is within the NVD affected range {m.affected_range} "
+                   f"for cpe:{m.vendor}:{m.product} (source: NVD {m.cve_id})",
+            severity_hint=m.severity,
+            risk_score=_risk_score(m.severity, "present", m.match, "inferred")))
+        fix = (f"Upgrade {m.name} to {m.fixed_version} or later; distribution packages may "
+               "backport the fix without changing the reported version."
+               if m.fixed_version else "Check the vendor advisory for a fixed release.")
+        vers.append(Verification(
+            id=verification_id(cid, run_id), run_id=run_id, target_id=target.target_id,
+            candidate_id=cid, status="present",
+            evidence=[Evidence(kind="dependency-present",
+                               detail=f"{m.evidence}: the version a visitor can read is within "
+                                      f"{m.affected_range}", source_url=url)],
+            checks_performed=["nvd:cpe"], suggested_fix=fix, target="public-passive"))
+    return list(items.values()), advs, cands, vers
+
+
 def _finish_knowledge(run_id: str, status: str, emit: Emit) -> None:
     """Close out the public-domain knowledge base, if this run built one. A complete KB is
     ingested into Senso; that call blocks, so complete runs reach here through to_thread."""

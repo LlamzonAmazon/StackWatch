@@ -26,7 +26,15 @@ class DependenciesSkill:
         # Not `from app.intel import match`: once app.intel.match is imported, that name is the
         # module.
         from app.intel.match import match_stack_items as match
-        from app.orchestrator import _posture_rows, _record_intel, _record_posture, _risk_score
+        from app.orchestrator import (
+            _mirror_nvd,
+            _nvd_rows,
+            _posture_rows,
+            _record_intel,
+            _record_nvd,
+            _record_posture,
+            _risk_score,
+        )
         from app.verify import verify
 
         emit, run_id, target = ctx.emit, ctx.run_id, ctx.target
@@ -51,9 +59,13 @@ class DependenciesSkill:
         emit("intel", "info",
              f"Matched {len(candidates)} candidates from {len(advisories)} advisories", None)
         # KEV and EPSS for the matched CVEs; a feed outage leaves intel unavailable, never fails.
+        # NVD matches for fingerprinted server software join the same lookup.
+        nvd_matches = [] if ctx.scoped_advisory_ids else _record_nvd(run_id, emit)
         cves = [c for a in advisories for c in cve_ids(a.advisory_id, a.aliases)]
+        cves += [m.cve_id for m in nvd_matches]
         intel_table = lookup(cves, emit)
         _record_intel(run_id, stack_items, candidates, advisories, emit, intel_table)
+        _mirror_nvd(run_id, nvd_matches, intel_table, emit)
         posture = [] if ctx.scoped_advisory_ids else _record_posture(run_id, emit)
 
         ctx.set_state("verifying")
@@ -80,6 +92,12 @@ class DependenciesSkill:
             store.insert_advisories(p_advs)
             store.insert_verifications(p_vers)
             persisted += p_cands
+        if nvd_matches:
+            n_items, n_advs, n_cands, n_vers = _nvd_rows(nvd_matches, run_id, target)
+            store.insert_stack_items(n_items)
+            store.insert_advisories(n_advs)
+            store.insert_verifications(n_vers)
+            persisted += n_cands
         # Persisted after scoring so the report's ORDER BY risk_score reflects verification.
         store.insert_candidates(persisted)
 

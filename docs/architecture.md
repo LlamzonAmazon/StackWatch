@@ -59,7 +59,9 @@ No skill produces findings directly.
 
 Joins the graph into findings. `reach.py` decides whether a vulnerable component is on a route; `score.py` combines severity, reach and novelty; `narrate.py` writes the explanation.
 
-Exploitation signals come from `app/intel/threat.py`: the dependencies skill looks up CISA KEV and FIRST EPSS for the CVE aliases of matched advisories (cached under `data/cache/intel/`, TTL 12h and 24h, `CACHE_ONLY` honored) and the correlator attaches the result to each finding as `intel`. `GET /api/runs/{id}/report` recomputes it per advisory from the same cache, so nothing new is stored. See D10 in [design-decisions.md](design-decisions.md) for how it moves ranking. `app/scanner/threat_patterns.py` names multi-step attack chains with MITRE mappings.
+Exploitation signals come from `app/intel/threat.py`: the dependencies skill looks up CISA KEV and FIRST EPSS for the CVE aliases of matched advisories (cached under `data/cache/intel/`, TTL 12h and 24h, `CACHE_ONLY` honored) and the correlator attaches the result to each finding as `intel`. `GET /api/runs/{id}/report` recomputes it per advisory from the same cache, so nothing new is stored. See D10 in [design-decisions.md](design-decisions.md) for how it moves ranking.
+
+For public domains, `app/intel/nvd.py` also matches fingerprinted server software and CMSs (nginx, Apache, PHP, WordPress and the rest of the table in `app/intel/cpe.py`) against NVD by CPE. The dependencies skill runs it before the KEV/EPSS lookup so those CVEs are enriched too, then stores the matches as stack item, advisory (source `nvd`), candidate and verification rows next to the OSV ones. Cache: `data/cache/intel/nvd/`. See D11. `app/scanner/threat_patterns.py` names multi-step attack chains with MITRE mappings.
 
 ### 5. Verification (`app/verify`)
 

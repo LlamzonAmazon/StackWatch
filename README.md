@@ -4,7 +4,7 @@
 
 StackWatch is an exposure agent. Point it at a public domain or a connected repository and it answers three questions: what is this target running, which published vulnerabilities affect it, and which of those are actually reachable.
 
-It inventories the stack (lockfiles, live site assets, DNS, TLS, mail security, certificate transparency), matches every resolved `package@version` against OSV advisories with deterministic semver logic, and then tries to prove or rule out each match with Semgrep reachability rules and scoped runtime checks. Every finding links to the evidence that produced it.
+It inventories the stack (lockfiles, live site assets, DNS, TLS, mail security, certificate transparency), matches every resolved `package@version` against OSV advisories with deterministic semver logic (and fingerprinted server software against NVD by CPE), flags CVEs on the CISA KEV list and ranks by EPSS, and then tries to prove or rule out each match with Semgrep reachability rules and scoped runtime checks. Every finding links to the evidence that produced it.
 
 ## How it works
 
@@ -75,7 +75,7 @@ The full self-audit is in [docs/security-audit.md](docs/security-audit.md).
 
 ## Status
 
-Runs end to end on local infrastructure. Not deployed. [docs/outstanding.md](docs/outstanding.md) lists what is left, starting with NVD matching by CPE (CISA KEV and EPSS are in).
+Runs end to end on local infrastructure. Not deployed. [docs/outstanding.md](docs/outstanding.md) lists what is left, starting with API authentication.
 
 ## Credits
 

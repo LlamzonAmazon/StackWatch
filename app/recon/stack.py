@@ -4,6 +4,7 @@ This only restates evidence the collectors already recorded (ASN owner, nameserv
 issuer, response headers, app bundle, third-party hosts). It does not probe anything.
 """
 
+from app.intel.cpe import cpe_for
 from app.recon.fingerprint import fingerprint_web
 from app.recon.kb import KnowledgeBase, Tech
 
@@ -47,9 +48,10 @@ def derive_stack(kb: KnowledgeBase) -> None:
     site = kb.web.get("final_url") or f"https://{kb.domain}/"
 
     def add(name, cat, ev, src, conf="high", ver=None, npm=None):
+        vendor, product = cpe_for(name) or (None, None)
         kb.add_tech(Tech(
-            name=name, category=cat, version=ver, npm=npm, confidence=conf, evidence=ev,
-            source=src))
+            name=name, category=cat, version=ver, vendor=vendor, product=product, npm=npm,
+            confidence=conf, evidence=ev, source=src))
 
     if kb.infra.get("hosting"):
         asns = ", ".join(sorted({f"AS{i.get('asn')}" for i in kb.infra.get("ips") or []

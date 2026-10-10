@@ -503,8 +503,9 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('inspec
 // Every input the verdict rests on, in the order it was used. Paths are local, links are external.
 function sourcesFor(f) {
   const out = [];
-  if (f.source_url) out.push({ node: 'repo', type: 'Lockfile', value: shortPath(f.source_url) });
-  if (f.advisory_url) out.push({ node: 'advisory', type: 'Advisory, OSV', value: f.advisory_id, href: f.advisory_url });
+  const nvd = f.source === 'nvd';
+  if (f.source_url) out.push({ node: 'repo', type: nvd ? 'Observed on' : 'Lockfile', value: nvd ? f.source_url : shortPath(f.source_url) });
+  if (f.advisory_url) out.push({ node: 'advisory', type: nvd ? 'Advisory, NVD' : 'Advisory, OSV', value: f.advisory_id, href: f.advisory_url });
   (f.checks_performed || []).filter(c => c.startsWith('semgrep:')).forEach(c => {
     out.push({ node: 'verify', type: 'Semgrep rule', value: 'rules/' + c.slice('semgrep:'.length) });
   });
@@ -535,7 +536,10 @@ function srcBlock(rows) {
 // What each source established, one short statement per step.
 function reasoning(f) {
   const steps = [];
-  steps.push({ node: 'repo', title: 'Installed', body: `<div class="quote">"${esc(f.package)}": "${esc(f.version || '?')}"</div>` });
+  const nvd = f.source === 'nvd';
+  steps.push(nvd
+    ? { node: 'repo', title: 'Fingerprinted', body: `<div class="quote">${esc(f.package)} ${esc(f.version || '?')}</div><div class="tsm">Read from what the site serves. A reported version can be stale or backported.</div>` }
+    : { node: 'repo', title: 'Installed', body: `<div class="quote">"${esc(f.package)}": "${esc(f.version || '?')}"</div>` });
   if (f.reason) {
     steps.push({ node: 'advisory', title: 'Matched', body: `<div class="tsm">${esc(f.reason.replace(/\s*\(source:[^)]*\)\s*$/, ''))}</div>` });
   }
@@ -545,6 +549,8 @@ function reasoning(f) {
     const m = /matched (\S+?):(\d+): (.*)$/s.exec(hit.detail || '');
     const firstSentence = m ? m[3].split(/(?<=\.)\s/)[0] : hit.detail;
     verify = `${m ? `<div class="codeline">${esc(m[1].replace(/^demo\/[^/]+\//, ''))}:${esc(m[2])}</div>` : ''}<div class="tsm">${esc(firstSentence)}</div>`;
+  } else if (nvd && f.verification_status === 'present') {
+    verify = `<div class="tsm">${esc(f.match_type === 'possible' ? 'Version is in the affected range, but the advisory also depends on another component (such as the operating system) that was not observed.' : 'Reported version is inside the NVD affected range.')} Not exploited or probed: this is passive.</div>`;
   } else if (f.verification_status === 'present') {
     verify = '<div class="tsm">Affected version confirmed in the lockfile. No code rule exists for this advisory, so reachability was not checked.</div>';
   } else {

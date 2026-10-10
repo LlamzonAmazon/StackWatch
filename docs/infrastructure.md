@@ -35,11 +35,12 @@ Environment variables, documented in `.env.example`. The app reads the process e
 | `CLICKHOUSE_ADMIN_USER`, `CLICKHOUSE_ADMIN_PASSWORD` | Used only by `apply_schema.py` |
 | `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_ENABLED`, `LLM_MAX_STEPS` | Research agent |
 | `OPENAI_API_KEY`, `OPENAI_MODEL` | Legacy explanation module (dead code, backlog item 13) |
-| `NVD_API_KEY`, `GITHUB_TOKEN` | Reserved for the intel cross-reference (backlog item 4) |
+| `NVD_API_KEY` | Optional. Raises the NVD rate limit from 5 to 50 requests per 30s; sent as the `apiKey` header only |
+| `GITHUB_TOKEN` | Reserved |
 | `SENSO_API_KEY`, `SENSO_BASE_URL` | Optional Senso integration |
 | `POLL_INTERVAL_SECONDS` | Watcher interval (default 300) |
 | `ALLOWED_REPO_ROOTS` | Path-separated roots a repo target may resolve into (default `demo`) |
-| `DEMO_MODE`, `CACHE_ONLY` | Demo replay and offline advisory cache |
+| `DEMO_MODE`, `CACHE_ONLY` | Demo replay and offline caches (OSV, KEV, EPSS, NVD): no intel request is made |
 
 `config/demo.yaml` holds `authorized_targets`: the only targets that get active verification.
 

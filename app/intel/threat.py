@@ -153,11 +153,12 @@ def _load_epss(cves: list[str], emit: Emit) -> dict[str, dict] | None:
     return have
 
 
-def _http_get(url: str, params: dict | None, max_bytes: int) -> bytes:
+def _http_get(url: str, params: dict | None, max_bytes: int,
+              headers: dict | None = None) -> bytes:
     """GET a fixed, trusted feed over HTTPS with a hard size cap. No redirects are followed."""
     body = bytearray()
     with httpx.Client(timeout=TIMEOUT, follow_redirects=False,
-                      headers={"User-Agent": USER_AGENT}) as client, \
+                      headers={"User-Agent": USER_AGENT, **(headers or {})}) as client, \
             client.stream("GET", url, params=params) as r:
         r.raise_for_status()
         for chunk in r.iter_bytes():
@@ -182,7 +183,7 @@ def _read_cache(path: Path) -> dict | None:
         return None
 
 
-def _write_cache(path: Path, data: dict) -> None:
+def _write_cache(path: Path, data: dict | list) -> None:
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(f".{os.getpid()}.tmp")

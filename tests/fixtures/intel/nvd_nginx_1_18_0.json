@@ -1,0 +1,749 @@
+{
+ "resultsPerPage": 6,
+ "startIndex": 0,
+ "totalResults": 6,
+ "format": "NVD_CVE",
+ "version": "2.0",
+ "timestamp": "2026-10-10T01:33:46.667",
+ "vulnerabilities": [
+  {
+   "cve": {
+    "id": "CVE-2021-23017",
+    "sourceIdentifier": "f5sirt@f5.com",
+    "published": "2021-06-01T13:15:07.853",
+    "lastModified": "2026-06-17T03:38:13.130",
+    "vulnStatus": "Modified",
+    "descriptions": [
+     {
+      "lang": "en",
+      "value": "A security issue in nginx resolver was identified, which might allow an attacker who is able to forge UDP packets from the DNS server to cause 1-byte memory overwrite, resulting in worker process crash or potential other impact."
+     }
+    ],
+    "metrics": {
+     "cvssMetricV31": [
+      {
+       "source": "nvd@nist.gov",
+       "type": "Primary",
+       "cvssData": {
+        "version": "3.1",
+        "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:L",
+        "baseScore": 7.7,
+        "baseSeverity": "HIGH",
+        "attackVector": "NETWORK",
+        "attackComplexity": "HIGH",
+        "privilegesRequired": "NONE",
+        "userInteraction": "NONE",
+        "scope": "UNCHANGED",
+        "confidentialityImpact": "HIGH",
+        "integrityImpact": "HIGH",
+        "availabilityImpact": "LOW"
+       },
+       "exploitabilityScore": 2.2,
+       "impactScore": 5.5
+      }
+     ],
+     "cvssMetricV2": [
+      {
+       "source": "nvd@nist.gov",
+       "type": "Primary",
+       "cvssData": {
+        "version": "2.0",
+        "vectorString": "AV:N/AC:M/Au:N/C:P/I:P/A:P",
+        "baseScore": 6.8,
+        "accessVector": "NETWORK",
+        "accessComplexity": "MEDIUM",
+        "authentication": "NONE",
+        "confidentialityImpact": "PARTIAL",
+        "integrityImpact": "PARTIAL",
+        "availabilityImpact": "PARTIAL"
+       },
+       "baseSeverity": "MEDIUM",
+       "exploitabilityScore": 8.6,
+       "impactScore": 6.4,
+       "acInsufInfo": false,
+       "obtainAllPrivilege": false,
+       "obtainUserPrivilege": false,
+       "obtainOtherPrivilege": false,
+       "userInteractionRequired": false
+      }
+     ]
+    },
+    "weaknesses": [
+     {
+      "source": "f5sirt@f5.com",
+      "type": "Secondary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-193"
+       }
+      ]
+     },
+     {
+      "source": "nvd@nist.gov",
+      "type": "Primary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-193"
+       }
+      ]
+     }
+    ],
+    "configurations": [
+     {
+      "nodes": [
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*",
+          "versionStartIncluding": "0.6.18",
+          "versionEndExcluding": "1.20.1",
+          "matchCriteriaId": "236E1381-BE09-4C0B-9319-E803B7163ECC"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "nodes": [
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:openresty:openresty:*:*:*:*:*:*:*:*",
+          "versionEndExcluding": "1.19.3.2",
+          "matchCriteriaId": "BD31F1B9-1CDB-4547-A19D-6A416FC45510"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "cve": {
+    "id": "CVE-2021-3618",
+    "sourceIdentifier": "secalert@redhat.com",
+    "published": "2022-03-23T20:15:09.833",
+    "lastModified": "2026-06-17T04:05:27.083",
+    "vulnStatus": "Modified",
+    "descriptions": [
+     {
+      "lang": "en",
+      "value": "ALPACA is an application layer protocol content confusion attack, exploiting TLS servers implementing different protocols but using compatible certificates, such as multi-domain or wildcard certificates. A MiTM attacker having access to victim's traffic at the TCP/IP layer can redirect traffic from one subdomain to another, resulting in a valid TLS session. This breaks the authentication of TLS and cross-protocol attacks may be possible where the behavior of one protocol service may compromise the other at the application layer."
+     }
+    ],
+    "metrics": {
+     "cvssMetricV31": [
+      {
+       "source": "nvd@nist.gov",
+       "type": "Primary",
+       "cvssData": {
+        "version": "3.1",
+        "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N",
+        "baseScore": 7.4,
+        "baseSeverity": "HIGH",
+        "attackVector": "NETWORK",
+        "attackComplexity": "HIGH",
+        "privilegesRequired": "NONE",
+        "userInteraction": "NONE",
+        "scope": "UNCHANGED",
+        "confidentialityImpact": "HIGH",
+        "integrityImpact": "HIGH",
+        "availabilityImpact": "NONE"
+       },
+       "exploitabilityScore": 2.2,
+       "impactScore": 5.2
+      }
+     ],
+     "cvssMetricV2": [
+      {
+       "source": "nvd@nist.gov",
+       "type": "Primary",
+       "cvssData": {
+        "version": "2.0",
+        "vectorString": "AV:N/AC:M/Au:N/C:P/I:P/A:N",
+        "baseScore": 5.8,
+        "accessVector": "NETWORK",
+        "accessComplexity": "MEDIUM",
+        "authentication": "NONE",
+        "confidentialityImpact": "PARTIAL",
+        "integrityImpact": "PARTIAL",
+        "availabilityImpact": "NONE"
+       },
+       "baseSeverity": "MEDIUM",
+       "exploitabilityScore": 8.6,
+       "impactScore": 4.9,
+       "acInsufInfo": false,
+       "obtainAllPrivilege": false,
+       "obtainUserPrivilege": false,
+       "obtainOtherPrivilege": false,
+       "userInteractionRequired": false
+      }
+     ]
+    },
+    "weaknesses": [
+     {
+      "source": "secalert@redhat.com",
+      "type": "Secondary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-295"
+       }
+      ]
+     },
+     {
+      "source": "nvd@nist.gov",
+      "type": "Secondary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-295"
+       }
+      ]
+     }
+    ],
+    "configurations": [
+     {
+      "nodes": [
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*",
+          "versionEndExcluding": "1.21.0",
+          "matchCriteriaId": "777D8DB3-65CF-4A12-BCCE-30849CE07762"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "nodes": [
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:sendmail:sendmail:*:*:*:*:*:*:*:*",
+          "versionEndExcluding": "8.17",
+          "matchCriteriaId": "2E5DF525-823F-49D0-BDD2-6BCE5EE0F66B"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "cve": {
+    "id": "CVE-2022-41741",
+    "sourceIdentifier": "f5sirt@f5.com",
+    "published": "2022-10-19T22:15:12.647",
+    "lastModified": "2026-06-17T05:03:44.713",
+    "vulnStatus": "Modified",
+    "descriptions": [
+     {
+      "lang": "en",
+      "value": "NGINX Open Source before versions 1.23.2 and 1.22.1, NGINX Open Source Subscription before versions R2 P1 and R1 P1, and NGINX Plus before versions R27 P1 and R26 P1 have a vulnerability in the module ngx_http_mp4_module that might allow a local attacker to corrupt NGINX worker memory, resulting in its termination or potential other impact using a specially crafted audio or video file. The issue affects only NGINX products that are built with the ngx_http_mp4_module, when the mp4 directive is used in the configuration file. Further, the attack is possible only if an attacker can trigger processing of a specially crafted audio or video file with the module ngx_http_mp4_module."
+     }
+    ],
+    "metrics": {
+     "cvssMetricV31": [
+      {
+       "source": "f5sirt@f5.com",
+       "type": "Secondary",
+       "cvssData": {
+        "version": "3.1",
+        "vectorString": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+        "baseScore": 7.0,
+        "baseSeverity": "HIGH",
+        "attackVector": "LOCAL",
+        "attackComplexity": "HIGH",
+        "privilegesRequired": "LOW",
+        "userInteraction": "NONE",
+        "scope": "UNCHANGED",
+        "confidentialityImpact": "HIGH",
+        "integrityImpact": "HIGH",
+        "availabilityImpact": "HIGH"
+       },
+       "exploitabilityScore": 1.0,
+       "impactScore": 5.9
+      }
+     ]
+    },
+    "weaknesses": [
+     {
+      "source": "f5sirt@f5.com",
+      "type": "Secondary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-787"
+       }
+      ]
+     },
+     {
+      "source": "nvd@nist.gov",
+      "type": "Primary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-787"
+       }
+      ]
+     }
+    ],
+    "configurations": [
+     {
+      "nodes": [
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:*:*:*:*:open_source:*:*:*",
+          "versionStartIncluding": "1.1.3",
+          "versionEndIncluding": "1.22.0",
+          "matchCriteriaId": "37C2C47D-5B99-4A7F-8EE8-4E5988BA7CB5"
+         },
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:*:*:*:*:plus:*:*:*",
+          "versionStartIncluding": "r22",
+          "versionEndIncluding": "r27",
+          "matchCriteriaId": "B1966323-7D3A-4102-AAB8-C007745BB766"
+         },
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:1.23.0:*:*:*:open_source:*:*:*",
+          "matchCriteriaId": "34B07066-845C-45AA-9F0E-576B10EF02EF"
+         },
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:1.23.1:*:*:*:open_source:*:*:*",
+          "matchCriteriaId": "8FC6884B-0C16-4ACF-8264-4AC34B9167CD"
+         },
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:r1:*:*:*:open_source_subscription:*:*:*",
+          "matchCriteriaId": "666D5C24-4F5A-44D9-B22C-6F0C46164B82"
+         },
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:r2:*:*:*:open_source_subscription:*:*:*",
+          "matchCriteriaId": "0EF2AA63-F4C2-476D-BDAE-2D4F63C74867"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "nodes": [
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:o:fedoraproject:fedora:35:*:*:*:*:*:*:*",
+          "matchCriteriaId": "80E516C0-98A4-4ADE-B69F-66A772E2BAAA"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "cve": {
+    "id": "CVE-2022-41742",
+    "sourceIdentifier": "f5sirt@f5.com",
+    "published": "2022-10-19T22:15:12.717",
+    "lastModified": "2026-06-17T05:03:44.843",
+    "vulnStatus": "Modified",
+    "descriptions": [
+     {
+      "lang": "en",
+      "value": "NGINX Open Source before versions 1.23.2 and 1.22.1, NGINX Open Source Subscription before versions R2 P1 and R1 P1, and NGINX Plus before versions R27 P1 and R26 P1 have a vulnerability in the module ngx_http_mp4_module that might allow a local attacker to cause a worker process crash, or might result in worker process memory disclosure by using a specially crafted audio or video file. The issue affects only NGINX products that are built with the module ngx_http_mp4_module, when the mp4 directive is used in the configuration file. Further, the attack is possible only if an attacker can trigger processing of a specially crafted audio or video file with the module ngx_http_mp4_module."
+     }
+    ],
+    "metrics": {
+     "cvssMetricV31": [
+      {
+       "source": "f5sirt@f5.com",
+       "type": "Secondary",
+       "cvssData": {
+        "version": "3.1",
+        "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:H",
+        "baseScore": 7.1,
+        "baseSeverity": "HIGH",
+        "attackVector": "LOCAL",
+        "attackComplexity": "LOW",
+        "privilegesRequired": "LOW",
+        "userInteraction": "NONE",
+        "scope": "UNCHANGED",
+        "confidentialityImpact": "HIGH",
+        "integrityImpact": "NONE",
+        "availabilityImpact": "HIGH"
+       },
+       "exploitabilityScore": 1.8,
+       "impactScore": 5.2
+      }
+     ]
+    },
+    "weaknesses": [
+     {
+      "source": "f5sirt@f5.com",
+      "type": "Secondary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-787"
+       }
+      ]
+     },
+     {
+      "source": "nvd@nist.gov",
+      "type": "Primary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-787"
+       }
+      ]
+     }
+    ],
+    "configurations": [
+     {
+      "nodes": [
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:*:*:*:*:open_source:*:*:*",
+          "versionStartIncluding": "1.1.3",
+          "versionEndIncluding": "1.22.0",
+          "matchCriteriaId": "37C2C47D-5B99-4A7F-8EE8-4E5988BA7CB5"
+         },
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:*:*:*:*:plus:*:*:*",
+          "versionStartIncluding": "r22",
+          "versionEndIncluding": "r27",
+          "matchCriteriaId": "B1966323-7D3A-4102-AAB8-C007745BB766"
+         },
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:1.23.0:*:*:*:open_source:*:*:*",
+          "matchCriteriaId": "34B07066-845C-45AA-9F0E-576B10EF02EF"
+         },
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:1.23.1:*:*:*:open_source:*:*:*",
+          "matchCriteriaId": "8FC6884B-0C16-4ACF-8264-4AC34B9167CD"
+         },
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:r1:*:*:*:open_source_subscription:*:*:*",
+          "matchCriteriaId": "666D5C24-4F5A-44D9-B22C-6F0C46164B82"
+         },
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:r2:*:*:*:open_source_subscription:*:*:*",
+          "matchCriteriaId": "0EF2AA63-F4C2-476D-BDAE-2D4F63C74867"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "nodes": [
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:o:fedoraproject:fedora:35:*:*:*:*:*:*:*",
+          "matchCriteriaId": "80E516C0-98A4-4ADE-B69F-66A772E2BAAA"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "cve": {
+    "id": "CVE-2023-44487",
+    "sourceIdentifier": "cve@mitre.org",
+    "published": "2023-10-10T14:15:10.883",
+    "lastModified": "2026-08-11T19:37:30.880",
+    "vulnStatus": "Analyzed",
+    "descriptions": [
+     {
+      "lang": "en",
+      "value": "The HTTP/2 protocol allows a denial of service (server resource consumption) because request cancellation can reset many streams quickly, as exploited in the wild in August through October 2023."
+     }
+    ],
+    "metrics": {
+     "cvssMetricV31": [
+      {
+       "source": "nvd@nist.gov",
+       "type": "Primary",
+       "cvssData": {
+        "version": "3.1",
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+        "baseScore": 7.5,
+        "baseSeverity": "HIGH",
+        "attackVector": "NETWORK",
+        "attackComplexity": "LOW",
+        "privilegesRequired": "NONE",
+        "userInteraction": "NONE",
+        "scope": "UNCHANGED",
+        "confidentialityImpact": "NONE",
+        "integrityImpact": "NONE",
+        "availabilityImpact": "HIGH"
+       },
+       "exploitabilityScore": 3.9,
+       "impactScore": 3.6
+      }
+     ]
+    },
+    "weaknesses": [
+     {
+      "source": "nvd@nist.gov",
+      "type": "Primary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "NVD-CWE-noinfo"
+       }
+      ]
+     },
+     {
+      "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+      "type": "Secondary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-400"
+       }
+      ]
+     }
+    ],
+    "configurations": [
+     {
+      "nodes": [
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*",
+          "versionStartIncluding": "1.9.5",
+          "versionEndIncluding": "1.25.2",
+          "matchCriteriaId": "1188B4A9-2684-413C-83D1-E91C75AE0FCF"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "operator": "AND",
+      "nodes": [
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:o:siemens:simatic_s7-1500_cpu_1518f-4_pn\\/dp_mfp_firmware:*:*:*:*:*:*:*:*",
+          "versionStartIncluding": "3.1.5",
+          "matchCriteriaId": "2A7548B8-3DF7-46D9-8A4F-87C38969D900"
+         }
+        ]
+       },
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": false,
+          "criteria": "cpe:2.3:h:siemens:simatic_s7-1500_cpu_1518f-4_pn\\/dp_mfp:-:*:*:*:*:*:*:*",
+          "matchCriteriaId": "5B1EE93D-BAD2-4B86-910C-8784FCC9F398"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "cve": {
+    "id": "CVE-2025-23419",
+    "sourceIdentifier": "f5sirt@f5.com",
+    "published": "2025-02-05T18:15:33.347",
+    "lastModified": "2026-06-17T08:54:13.083",
+    "vulnStatus": "Analyzed",
+    "descriptions": [
+     {
+      "lang": "en",
+      "value": "When multiple server blocks are configured to share the same IP address and port, an attacker can use session resumption to bypass client certificate authentication requirements on these servers. This vulnerability arises when  TLS Session Tickets https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_session_ticket_key  are used and/or the  SSL session cache https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_session_cache  are used in the default server and the default server is performing client certificate authentication.\u00a0\u00a0\n\nNote: Software versions which have reached End of Technical Support (EoTS) are not evaluated."
+     }
+    ],
+    "metrics": {
+     "cvssMetricV40": [
+      {
+       "source": "f5sirt@f5.com",
+       "type": "Secondary",
+       "cvssData": {
+        "version": "4.0",
+        "vectorString": "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N/E:X/CR:X/IR:X/AR:X/MAV:X/MAC:X/MAT:X/MPR:X/MUI:X/MVC:X/MVI:X/MVA:X/MSC:X/MSI:X/MSA:X/S:X/AU:X/R:X/V:X/RE:X/U:X",
+        "baseScore": 5.3,
+        "baseSeverity": "MEDIUM",
+        "attackVector": "NETWORK",
+        "attackComplexity": "LOW",
+        "attackRequirements": "NONE",
+        "privilegesRequired": "LOW",
+        "userInteraction": "NONE",
+        "vulnConfidentialityImpact": "LOW",
+        "vulnIntegrityImpact": "NONE",
+        "vulnAvailabilityImpact": "NONE",
+        "subConfidentialityImpact": "NONE",
+        "subIntegrityImpact": "NONE",
+        "subAvailabilityImpact": "NONE",
+        "exploitMaturity": "NOT_DEFINED",
+        "confidentialityRequirement": "NOT_DEFINED",
+        "integrityRequirement": "NOT_DEFINED",
+        "availabilityRequirement": "NOT_DEFINED",
+        "modifiedAttackVector": "NOT_DEFINED",
+        "modifiedAttackComplexity": "NOT_DEFINED",
+        "modifiedAttackRequirements": "NOT_DEFINED",
+        "modifiedPrivilegesRequired": "NOT_DEFINED",
+        "modifiedUserInteraction": "NOT_DEFINED",
+        "modifiedVulnConfidentialityImpact": "NOT_DEFINED",
+        "modifiedVulnIntegrityImpact": "NOT_DEFINED",
+        "modifiedVulnAvailabilityImpact": "NOT_DEFINED",
+        "modifiedSubConfidentialityImpact": "NOT_DEFINED",
+        "modifiedSubIntegrityImpact": "NOT_DEFINED",
+        "modifiedSubAvailabilityImpact": "NOT_DEFINED",
+        "Safety": "NOT_DEFINED",
+        "Automatable": "NOT_DEFINED",
+        "Recovery": "NOT_DEFINED",
+        "valueDensity": "NOT_DEFINED",
+        "vulnerabilityResponseEffort": "NOT_DEFINED",
+        "providerUrgency": "NOT_DEFINED"
+       }
+      }
+     ],
+     "cvssMetricV31": [
+      {
+       "source": "f5sirt@f5.com",
+       "type": "Secondary",
+       "cvssData": {
+        "version": "3.1",
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:N",
+        "baseScore": 4.3,
+        "baseSeverity": "MEDIUM",
+        "attackVector": "NETWORK",
+        "attackComplexity": "LOW",
+        "privilegesRequired": "LOW",
+        "userInteraction": "NONE",
+        "scope": "UNCHANGED",
+        "confidentialityImpact": "LOW",
+        "integrityImpact": "NONE",
+        "availabilityImpact": "NONE"
+       },
+       "exploitabilityScore": 2.8,
+       "impactScore": 1.4
+      }
+     ]
+    },
+    "weaknesses": [
+     {
+      "source": "f5sirt@f5.com",
+      "type": "Secondary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-863"
+       }
+      ]
+     },
+     {
+      "source": "nvd@nist.gov",
+      "type": "Primary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-863"
+       }
+      ]
+     }
+    ],
+    "configurations": [
+     {
+      "nodes": [
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*",
+          "versionStartIncluding": "1.11.4",
+          "versionEndExcluding": "1.26.3",
+          "matchCriteriaId": "90E7462C-FF90-4463-BB1C-8B9BC94FFA54"
+         },
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*",
+          "versionStartIncluding": "1.27.0",
+          "versionEndExcluding": "1.27.4",
+          "matchCriteriaId": "34709BDE-C5EF-4D44-8BDC-0791B6A15E5E"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "nodes": [
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:o:debian:debian_linux:11.0:*:*:*:*:*:*:*",
+          "matchCriteriaId": "FA6FEEC2-9F11-4643-8827-749718254FED"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}
