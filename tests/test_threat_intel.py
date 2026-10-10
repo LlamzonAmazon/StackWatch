@@ -103,6 +103,15 @@ def test_second_lookup_is_served_from_cache(feeds):
     assert i.status == "ok" and i.kev and len(feeds.calls) == 2
 
 
+def test_cache_only_lookup_never_fetches(feeds):
+    """The report route reads with cache_only, so a GET cannot cause outbound traffic."""
+    cold = threat.intel_for([log4j], threat.lookup([log4j], emit, cache_only=True))
+    assert feeds.calls == [] and cold.status == "unavailable"
+    threat.lookup([log4j], emit)
+    warm = threat.intel_for([log4j], threat.lookup([log4j], emit, cache_only=True))
+    assert len(feeds.calls) == 2 and warm.status == "ok" and warm.kev
+
+
 def test_stale_cache_is_used_when_the_refresh_fails(feeds, monkeypatch):
     threat.lookup([log4j], emit)
     monkeypatch.setattr(threat, "KEV_TTL", -1)

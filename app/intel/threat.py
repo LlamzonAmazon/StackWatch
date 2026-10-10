@@ -48,13 +48,16 @@ def cve_ids(advisory_id: str, aliases: list[str]) -> list[str]:
     return out
 
 
-def lookup(cves: list[str], emit: Emit) -> IntelTable:
-    """Fetch (or read from cache) KEV and EPSS data for these CVEs."""
+def lookup(cves: list[str], emit: Emit, cache_only: bool = False) -> IntelTable:
+    """Fetch (or read from cache) KEV and EPSS data for these CVEs.
+
+    cache_only reads what a run already fetched and never goes to the network; the report
+    route uses it so a read request cannot trigger outbound traffic."""
     cves = sorted({c.upper() for c in cves if CVE_RE.match(c or "")})
     if not cves:
         return IntelTable(kev={}, epss={})
     try:
-        table = IntelTable(kev=_load_kev(emit), epss=_load_epss(cves, emit))
+        table = IntelTable(kev=_load_kev(emit, cache_only), epss=_load_epss(cves, emit, cache_only))
     except Exception as e:  # noqa: BLE001 - a feed problem must never fail a run
         emit("intel", "warn", f"Threat intel lookup failed: {e}", None)
         return IntelTable()
@@ -93,12 +96,12 @@ def intel_for(cves: list[str], table: IntelTable) -> ThreatIntel:
 # feeds
 # --------------------------------------------------------------------------- #
 
-def _load_kev(emit: Emit) -> dict[str, dict] | None:
+def _load_kev(emit: Emit, cache_only: bool = False) -> dict[str, dict] | None:
     path = CACHE_DIR / "kev.json"
     cached = _read_cache(path)
     if cached is not None and _fresh(path, KEV_TTL):
         return cached
-    if not config.CACHE_ONLY:
+    if not (cache_only or config.CACHE_ONLY):
         try:
             raw = json.loads(_http_get(KEV_URL, None, KEV_MAX_BYTES))
             data = {}
@@ -119,14 +122,14 @@ def _load_kev(emit: Emit) -> dict[str, dict] | None:
     return cached  # stale beats nothing; None when there is no cache at all
 
 
-def _load_epss(cves: list[str], emit: Emit) -> dict[str, dict] | None:
+def _load_epss(cves: list[str], emit: Emit, cache_only: bool = False) -> dict[str, dict] | None:
     path = CACHE_DIR / "epss.json"
     cache = _read_cache(path) or {}
     now = time.time()
     fresh = {c: e for c, e in cache.items() if now - e.get("fetched", 0) < EPSS_TTL}
     missing = [c for c in cves if c not in fresh]
     failed = False
-    if missing and not config.CACHE_ONLY:
+    if missing and not (cache_only or config.CACHE_ONLY):
         for i in range(0, len(missing), EPSS_BATCH):
             batch = missing[i:i + EPSS_BATCH]
             try:
@@ -148,7 +151,7 @@ def _load_epss(cves: list[str], emit: Emit) -> dict[str, dict] | None:
     answered = [c for c in cves if c in cache]  # fresh, fetched now, or stale as a fallback
     if failed and not answered:
         return None
-    if config.CACHE_ONLY and not answered:
+    if (cache_only or config.CACHE_ONLY) and not answered:
         return None
     return have
 

@@ -260,13 +260,13 @@ async def get_report(run_id: RunIdPath):
         {"ids": adv_ids},
     )
 
-    # KEV and EPSS per advisory, from the CVE aliases. Cached on disk by the run that matched
-    # them; an outage leaves intel unavailable on the finding rather than failing the report.
+    # KEV and EPSS per advisory, from the CVE aliases. Read only from the cache the run filled,
+    # so a report request never fetches; a cold cache leaves intel unavailable on the finding.
     adv_cves = {aid: cve_ids(aid, _json_list(row[3] if len(row) > 3 else "")) for aid, row in
                 advs.items()}
     adv_cves.update({aid: cve_ids(aid, []) for aid in adv_ids if aid not in adv_cves})
     all_cves = sorted({c for cs in adv_cves.values() for c in cs})
-    table = await asyncio.to_thread(threat.lookup, all_cves, lambda *_: None) if all_cves \
+    table = await asyncio.to_thread(threat.lookup, all_cves, lambda *_: None, True) if all_cves \
         else threat.IntelTable(kev={}, epss={})
 
     findings = []

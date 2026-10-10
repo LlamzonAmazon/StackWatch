@@ -383,12 +383,17 @@ async def test_report_enriches_with_kev_and_ranks_it_first(client, ch, monkeypat
                                 "dueDate": "2021-12-24", "knownRansomwareCampaignUse": "Known"}]}
     epss = {"data": [{"cve": "CVE-2021-44228", "epss": "0.97", "percentile": "0.99"}]}
 
+    fetched = []
+
     def fake_get(url, params, max_bytes):
+        fetched.append(url)
         return json.dumps(kev if url == threat.KEV_URL else epss).encode()
 
     monkeypatch.setattr(threat, "CACHE_DIR", tmp_path)
     monkeypatch.setattr(threat, "_http_get", fake_get)
     monkeypatch.setattr(config, "CACHE_ONLY", False)
+    threat.lookup(["CVE-2021-44228"], lambda *_: None)  # the run warms the cache
+    fetched.clear()
     main.store.get_run.return_value = {"run_id": RUN_ID, "state": "complete"}
     ch.on("FROM candidates", [
         ("c1", "s1", "GHSA-1", "", "confirmed", "high", 3, None, None, ""),
@@ -404,3 +409,4 @@ async def test_report_enriches_with_kev_and_ranks_it_first(client, ch, monkeypat
     assert f1["intel"]["kev"] is True and f1["intel"]["kev_ransomware"] is True
     assert f1["intel"]["epss"] == 0.97
     assert f2["intel"]["status"] == "no-cve" and f2["risk_score"] == 3
+    assert fetched == []  # the report reads the cache only
