@@ -293,6 +293,9 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
 .card[aria-pressed="true"] { background: var(--fill-3); outline: 1px solid var(--accent-soft); outline-offset: -1px; }
 .card { gap: 3px; }
 .card-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; min-width: 0; }
+.card-tags { display: inline-flex; gap: 4px; align-items: center; flex-shrink: 0; }
+.insp-intel { font-size: var(--fs-sm); color: var(--text-2); margin: 10px 0; }
+.card-meta { font-size: 11px; color: var(--text-3); }
 .card-pkg { font-family: var(--mono); font-size: var(--fs-xs); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card-sum { font-size: var(--fs-xs); color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

@@ -15,8 +15,9 @@ import semver
 from app.correlate.graph import Graph
 from app.correlate.narrate import refine_with_model, template_dependency
 from app.correlate.reach import Reach, Reachability
-from app.correlate.score import LEVELS, score_dependency, score_exposure
+from app.correlate.score import LEVELS, score_dependency, score_exposure, score_intel
 from app.intel.impact import IMPACT_BASE, classify, model_symbol, symbol_candidates
+from app.intel.threat import IntelTable, cve_ids, intel_for
 from app.schema import Finding, PathStep
 
 TIER_RANK = {"exposed": 3, "called": 2, "imported": 1, "installed": 0}
@@ -69,6 +70,7 @@ def dependency_findings(graph, ctx, engine: Reachability, stakes, client, model)
     advisories = ctx.shared.get("advisories") or {}
     verifications = ctx.shared.get("verifications") or {}
     stack = ctx.shared.get("stack_map") or {}
+    intel_table = ctx.shared.get("intel_table") or IntelTable()
     model_calls = 0
 
     scored: dict[str, list[tuple]] = {}
@@ -104,8 +106,11 @@ def dependency_findings(graph, ctx, engine: Reachability, stakes, client, model)
         c, a, si, impact, reach, sev, reasons = rows[0]
         ids = [c.advisory_id] + [r[0].advisory_id for r in rows[1:]
                                  if r[0].advisory_id != c.advisory_id]
+        cves = [x for r in rows for x in cve_ids(r[1].advisory_id, r[1].aliases)]
+        intel = intel_for(cves, intel_table)
         if len(ids) > 1:
             reasons = reasons + [f"Worst of {len(ids)} advisories for {pkg}"]
+        sev, reasons = score_intel(sev, reasons, intel, reach.tier)
         f = Finding(
             id=_fid(ctx.run_id, "dep", pkg), run_id=ctx.run_id, kind="vulnerable-dependency",
             title="", attacker_gets="", how_reachable="", impact=impact, reach=reach.tier,
@@ -113,6 +118,7 @@ def dependency_findings(graph, ctx, engine: Reachability, stakes, client, model)
             symbol=reach.symbol, path=reach.steps, severity=sev, severity_reasons=reasons,
             cvss_severity=c.severity_hint, advisory_ids=ids, package=pkg,
             version=si.version if si else None, fix=_fix(pkg, [r[0] for r in rows], reach),
+            intel=intel,
         )
         f.title, f.attacker_gets, f.how_reachable = template_dependency(f, reach)
         findings.append(f)

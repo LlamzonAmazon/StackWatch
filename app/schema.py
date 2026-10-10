@@ -123,6 +123,26 @@ class Verification(BaseModel):
     target: str | None = None  # connected-repo or owned-authorized
 
 
+IntelStatus = Literal["ok", "partial", "unavailable", "no-cve"]
+
+
+class ThreatIntel(BaseModel):
+    """CISA KEV and FIRST EPSS signals for the CVEs behind a finding (worst case across them).
+
+    status: ok (both feeds answered), partial (one feed down), unavailable (both down or
+    CACHE_ONLY with a cold cache), no-cve (the advisory carries no CVE alias to look up).
+    """
+
+    status: IntelStatus = "no-cve"
+    cves: list[str] = Field(default_factory=list)
+    kev: bool = False
+    kev_date_added: str | None = None
+    kev_due_date: str | None = None
+    kev_ransomware: bool | None = None  # True when CISA marks known ransomware campaign use
+    epss: float | None = None  # probability of exploitation in the next 30 days, 0 to 1
+    epss_percentile: float | None = None
+
+
 ReachTier = Literal["exposed", "called", "imported", "installed"]
 FindingKind = Literal["vulnerable-dependency", "exposed-secret", "misconfig"]
 
@@ -160,6 +180,7 @@ class Finding(BaseModel):
     version: str | None = None
     fix: str | None = None
     narrated_by: Literal["template", "model"] = "template"
+    intel: ThreatIntel | None = None
 
 
 class Event(BaseModel):

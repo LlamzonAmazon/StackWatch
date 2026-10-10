@@ -388,14 +388,26 @@ function renderBoard(emptyMsg) {
   });
 }
 
+// Exploitation signals from CISA KEV and EPSS; absent or unavailable intel renders nothing.
+function epssLabel(i) {
+  return i && typeof i.epss === 'number' ? `EPSS ${Math.round((i.epss_percentile ?? 0) * 100)}th pct` : '';
+}
+
+function intelTags(i) {
+  if (!i || !i.kev) return '';
+  return `<span class="tag tag-sm kev" title="Added ${esc(i.kev_date_added || '?')}, due ${esc(i.kev_due_date || '?')}">KEV</span>`
+    + (i.kev_ransomware ? '<span class="tag tag-sm ransom">Ransomware</span>' : '');
+}
+
 function cardHtml(f) {
   if (f.ecosystem === 'config') return configCard(f);
   const vs = VSTATUS[f.verification_status] || VSTATUS.inconclusive;
   const isSel = selected === f.candidate_id;
   const reach = f.verification_status === 'verified';
   return `<button type="button" class="card${reach ? ' reachable' : ''}" data-id="${esc(f.candidate_id)}" aria-pressed="${isSel}" title="${esc(f.advisory_id)}">
-    <span class="card-top"><span class="card-pkg">${esc(f.package || '?')}@${esc(f.version || '?')}</span>${reach ? `<span class="tag tag-sm ${vs.cls}">${vs.label}</span>` : ''}</span>
+    <span class="card-top"><span class="card-pkg">${esc(f.package || '?')}@${esc(f.version || '?')}</span><span class="card-tags">${intelTags(f.intel)}${reach ? `<span class="tag tag-sm ${vs.cls}">${vs.label}</span>` : ''}</span></span>
     <span class="card-sum">${esc(f.summary || f.advisory_id)}</span>
+    ${epssLabel(f.intel) ? `<span class="card-meta mono">${epssLabel(f.intel)}</span>` : ''}
   </button>`;
 }
 
@@ -449,6 +461,16 @@ function configDetail(f) {
         <div class="cbody"><h4>${esc(st.title)}</h4>${st.body}</div></div>`).join('')}</div>`;
 }
 
+function intelDetail(i) {
+  if (!i || i.status === 'no-cve') return '';
+  if (i.status === 'unavailable') return '<div class="insp-intel">Exploit intel (CISA KEV, EPSS) was unavailable for this run.</div>';
+  const parts = [];
+  if (i.kev) parts.push(`On the CISA known exploited list since ${esc(i.kev_date_added || '?')}; federal remediation due ${esc(i.kev_due_date || '?')}${i.kev_ransomware ? '; used in ransomware campaigns' : ''}.`);
+  if (typeof i.epss === 'number') parts.push(`EPSS ${(i.epss * 100).toFixed(1)}% chance of exploitation in the next 30 days (${epssLabel(i)}).`);
+  if (i.status === 'partial') parts.push('One exploit feed was unavailable, so this may be incomplete.');
+  return parts.length ? `<div class="insp-intel">${parts.join(' ')}</div>` : '';
+}
+
 function advisoryDetail(f) {
   if (f.ecosystem === 'config') return configDetail(f);
   const vs = VSTATUS[f.verification_status] || VSTATUS.inconclusive;
@@ -459,8 +481,10 @@ function advisoryDetail(f) {
     <div class="insp-tags">
       <span class="tag sev-${esc(sev)}">${cap(sev)}</span>
       <span class="tag ${vs.cls}">${vs.label}</span>
+      ${intelTags(f.intel)}
       <span class="mono">risk ${f.risk_score ?? '--'} · ${f.direct ? 'direct' : 'transitive'}</span>
     </div>
+    ${intelDetail(f.intel)}
     ${sourcesList(f)}
     ${reasoning(f)}`;
 }

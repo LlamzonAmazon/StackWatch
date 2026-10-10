@@ -53,3 +53,10 @@ Append-only log. Each entry: the decision, what drove it, and the alternatives c
 **Decision:** StackWatch continues in a new repository with fresh history, migrated from the event repo's tracked files only.
 **Why:** a coherent public history for the portfolio, and the hardcoded database password never enters the new history.
 **Cost:** teammates' commits are not carried over; attribution lives in [goals.md](goals.md#contributions). Dropped: the Juice Shop pentest report, runtime data, local tool binaries and the untracked demo targets.
+
+## D10. Exploitation signals nudge ranking; they never create or hide findings
+
+**Decision:** CISA KEV and FIRST EPSS are joined to advisories by CVE alias (`app/intel/threat.py`). In the correlator, a KEV listing or an EPSS score of 0.5 or more raises a dependency finding one severity level, with a written reason, unless nothing in the app reaches the package (the lockfile-only tier), where severity holds and the reason says so. In the advisory list, the risk score gets +4 for KEV or +2 for high EPSS (not stacked), applied at report time and not stored.
+**Why:** reachability answers "can an attacker get there" and KEV/EPSS answer "do attackers bother". The two compose, but exploitation in the wild does not matter when no code path reaches the flaw, so reach stays the gate. One level and one small integer keep the change auditable. Not persisting the boost means a feed refresh reorders the list without a schema change or a re-run.
+**Failure behavior:** feeds are cached on disk (KEV 12h, EPSS 24h), honor `CACHE_ONLY`, fall back to a stale cache, and otherwise mark intel `unavailable` on the finding. An outage never fails a run or hides a finding.
+**Alternatives:** weighting EPSS continuously (rejected: a float multiplier is hard to explain per finding), raising unreachable findings too (rejected: it reintroduces the "version in range means exploitable" noise from D4).

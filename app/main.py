@@ -24,8 +24,11 @@ from app.config import (
     is_target_authorized,
     resolve_repo_path,
 )
+from app.correlate.score import intel_risk_boost
 from app.events import make_emit
 from app.integrations import senso
+from app.intel import threat
+from app.intel.threat import cve_ids
 from app.recon.domain import normalize_domain
 from app.recon.kb import KnowledgeBase
 from app.recon.runner import get_live
@@ -196,6 +199,14 @@ async def get_run(run_id: RunIdPath):
     return run
 
 
+def _json_list(raw: str) -> list[str]:
+    try:
+        v = json.loads(raw or "[]")
+    except ValueError:
+        return []
+    return [str(x) for x in v] if isinstance(v, list) else []
+
+
 def _rows_by_key(query: str, params: dict) -> dict:
     result = store.get_client().query(query, parameters=params)
     return {row[0]: row[1:] for row in result.result_rows}
@@ -244,23 +255,34 @@ async def get_report(run_id: RunIdPath):
         {"run_id": run_id},
     )
     advs = _rows_by_key(
-        "SELECT advisory_id, argMax(summary, modified), max(replayed), any(source) "
+        "SELECT advisory_id, argMax(summary, modified), max(replayed), any(source), any(aliases) "
         "FROM advisories WHERE advisory_id IN {ids:Array(String)} GROUP BY advisory_id",
         {"ids": adv_ids},
     )
+
+    # KEV and EPSS per advisory, from the CVE aliases. Cached on disk by the run that matched
+    # them; an outage leaves intel unavailable on the finding rather than failing the report.
+    adv_cves = {aid: cve_ids(aid, _json_list(row[3] if len(row) > 3 else "")) for aid, row in
+                advs.items()}
+    adv_cves.update({aid: cve_ids(aid, []) for aid in adv_ids if aid not in adv_cves})
+    all_cves = sorted({c for cs in adv_cves.values() for c in cs})
+    table = await asyncio.to_thread(threat.lookup, all_cves, lambda *_: None) if all_cves \
+        else threat.IntelTable(kev={}, epss={})
 
     findings = []
     for cid, si_id, adv_id, adv_url, match_type, severity, risk, fixed_v, expl, reason in cand_rows:
         si = stack.get(si_id)
         ver = vers.get(cid)
         adv = advs.get(adv_id)
+        intel = threat.intel_for(adv_cves.get(adv_id, []), table)
         findings.append({
             "candidate_id": cid,
             "advisory_id": adv_id,
             "advisory_url": adv_url or None,
             "match_type": match_type,
             "severity": severity,
-            "risk_score": risk,
+            "risk_score": risk + intel_risk_boost(intel),
+            "intel": intel.model_dump(),
             "fixed_version": fixed_v,
             "reason": reason or None,
             "explanation": expl,
@@ -280,6 +302,7 @@ async def get_report(run_id: RunIdPath):
             "source": (adv[2] or None) if adv else None,
         })
 
+    findings.sort(key=lambda f: (-f["risk_score"], f["advisory_id"]))
     return {"run_id": run_id, "state": run["state"], "summary": summary, "findings": findings}
 
 

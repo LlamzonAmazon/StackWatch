@@ -18,7 +18,7 @@ Related hardening done during migration: ClickHouse ports and the documented uvi
 
 | # | Item | Status |
 |---|------|--------|
-| 4 | **Threat-intel cross-reference.** CISA KEV, NVD matched by CPE, and EPSS scoring were never built. Exposure shows OSV results and configuration findings only. Biggest gap against the pitch. | open |
+| 4 | **Threat-intel cross-reference.** CISA KEV, NVD matched by CPE, and EPSS scoring were never built. Exposure shows OSV results and configuration findings only. Biggest gap against the pitch. | partial: CISA KEV and EPSS are joined to OSV advisories by CVE alias ([D10](design-decisions.md)). Still open: NVD matched by CPE (needs item 5's versions). |
 | 5 | **Version fingerprinting.** The stack summary for public domains rarely captures versions, and item 4 needs them for CPE matching. | open |
 | 6 | **Senso.** Built (`app/integrations/senso.py`) but never verified against a real key. | open |
 | 7 | **Configuration findings are invisible to the attack-chain correlator.** They render on the board but are not graph nodes. | open |

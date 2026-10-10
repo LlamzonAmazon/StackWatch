@@ -198,8 +198,9 @@ def _run_skills_and_correlate(run: Run, target: Target, stack_items: list[StackI
 
 
 def _record_intel(run_id: str, stack_items: list[StackItem], candidates, advisories,
-                  emit: Emit) -> None:
+                  emit: Emit, intel_table=None) -> None:
     """Mirror OSV results into the public-domain KB, including when nothing was checkable."""
+    from app.intel.threat import IntelTable, cve_ids, intel_for
     from app.recon.kb import IntelHit
     from app.recon.runner import get_live, save
 
@@ -207,16 +208,23 @@ def _record_intel(run_id: str, stack_items: list[StackItem], candidates, advisor
     if not kb:
         return
     kb.status = "cross-referencing"
+    table = intel_table or IntelTable()
     npm = [s for s in stack_items if s.ecosystem == "npm" and s.package]
     kb.coverage["osv"] = "ok" if npm else "skipped"
+    if npm and candidates:
+        kb.coverage["kev"] = "ok" if table.kev is not None else "failed"
+        kb.coverage["epss"] = "ok" if table.epss is not None else "failed"
     adv = {a.advisory_id: a for a in advisories}
     items = {s.id: s for s in stack_items}
     for c in candidates:
         a, si = adv.get(c.advisory_id), items.get(c.stack_item_id)
+        ti = intel_for(cve_ids(c.advisory_id, a.aliases if a else []), table)
         kb.intel.append(IntelHit(
             source="osv", id=c.advisory_id, title=(a.summary if a else None) or c.advisory_id,
             tech=si.name if si else None, severity=c.severity_hint, match=c.match_type,
             url=c.advisory_url, detail=c.reason or "", fixed_version=c.fixed_version,
+            kev=ti.kev, kev_ransomware=bool(ti.kev_ransomware), epss=ti.epss,
+            epss_percentile=ti.epss_percentile,
         ))
     if not npm:
         emit("intel", "info", "OSV: no versioned JavaScript libraries on the site to check", None)

@@ -57,7 +57,9 @@ No skill produces findings directly.
 
 ### 4. Correlation (`app/correlate`)
 
-Joins the graph into findings. `reach.py` decides whether a vulnerable component is on a route; `score.py` combines severity, reach and novelty; `narrate.py` writes the explanation. `app/scanner/threat_patterns.py` names multi-step attack chains with MITRE mappings.
+Joins the graph into findings. `reach.py` decides whether a vulnerable component is on a route; `score.py` combines severity, reach and novelty; `narrate.py` writes the explanation.
+
+Exploitation signals come from `app/intel/threat.py`: the dependencies skill looks up CISA KEV and FIRST EPSS for the CVE aliases of matched advisories (cached under `data/cache/intel/`, TTL 12h and 24h, `CACHE_ONLY` honored) and the correlator attaches the result to each finding as `intel`. `GET /api/runs/{id}/report` recomputes it per advisory from the same cache, so nothing new is stored. See D10 in [design-decisions.md](design-decisions.md) for how it moves ranking. `app/scanner/threat_patterns.py` names multi-step attack chains with MITRE mappings.
 
 ### 5. Verification (`app/verify`)
 

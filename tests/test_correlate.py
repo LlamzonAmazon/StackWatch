@@ -91,7 +91,7 @@ ADVISORIES = [
 ]
 
 
-def _run(repo, endpoints=(), client=None, model=None):
+def _run(repo, endpoints=(), client=None, model=None, intel_table=None):
     target = Target(target_id="t_fix", kind="connected_repo", name="fix", repo=str(repo))
     with patch("app.discovery.repo.config.is_repo_path_allowed", return_value=True), \
             patch("app.discovery.repo.config.resolve_repo_path", return_value=repo):
@@ -102,10 +102,12 @@ def _run(repo, endpoints=(), client=None, model=None):
                        match_type="confirmed", severity_hint="critical",
                        fixed_version="99.0.0") for a in ADVISORIES]
     adv_map = {a.advisory_id: a for a in ADVISORIES}
+    for aid, cve in (("GHSA-qs", "CVE-2022-24999"), ("GHSA-vuln", "CVE-2022-0001")):
+        adv_map[aid] = adv_map[aid].model_copy(update={"aliases": [cve]})
     ctx = SkillContext(target=target, run_id="r1", emit=lambda *a: None, stack_items=items,
                        repo_path=repo)
     ctx.shared.update(candidates=cands, advisories=adv_map, verifications={},
-                      stack_map={s.id: s for s in items})
+                      stack_map={s.id: s for s in items}, intel_table=intel_table)
     nodes, edges = deps_graph(items, cands, adv_map, {}, ctx)
     results = [SkillResult(name="dependencies", nodes=nodes, edges=edges),
                CodeGraphSkill().run(ctx), ExposuresSkill().run(ctx)]
@@ -194,6 +196,27 @@ def test_reach_tiers_and_contextual_severity(repo):
     assert "Development dependency" in f["mocha"].how_reachable
     for finding in f.values():
         assert finding.title and "GHSA" not in finding.title
+
+
+def test_kev_listing_raises_a_reachable_finding_but_not_an_unreachable_one(repo):
+    from app.intel.threat import IntelTable
+
+    entry = {"added": "2024-01-02", "due": "2024-01-23", "ransomware": False}
+    kev = {"CVE-2022-24999": entry, "CVE-2022-0001": entry}
+    base = _run(repo, endpoints=[("/rest/search", "public")])
+    f = _run(repo, endpoints=[("/rest/search", "public")],
+             intel_table=IntelTable(kev=kev, epss={}))
+    assert base["qs"].severity == "medium" and base["qs"].intel.status == "unavailable"
+    assert base["lodash"].intel.status == "no-cve"
+    assert f["qs"].severity == "high" and f["qs"].intel.kev is True
+    assert f["qs"].intel.kev_due_date == "2024-01-23"
+    assert any("KEV" in r and "(+1)" in r for r in f["qs"].severity_reasons)
+    # A finding whose advisory has no CVE alias is untouched, and rank follows severity.
+    assert f["lodash"].severity == base["lodash"].severity
+    # Same KEV listing, but the package is only in the lockfile: severity holds.
+    unreached = _run(repo, intel_table=IntelTable(kev=kev, epss={}))
+    assert unreached["vulnlib"].reach == "installed"
+    assert unreached["vulnlib"].severity == "low" and unreached["vulnlib"].intel.kev
 
 
 def test_served_secret_is_exposed_with_url(repo):

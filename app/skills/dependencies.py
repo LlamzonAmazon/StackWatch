@@ -11,6 +11,7 @@ import re
 from app import store
 from app.config import load_demo_config
 from app.correlate.graph import Edge, Node
+from app.intel.threat import cve_ids, lookup
 from app.skills import SkillContext, SkillResult
 
 
@@ -49,7 +50,10 @@ class DependenciesSkill:
         store.insert_advisories(advisories)
         emit("intel", "info",
              f"Matched {len(candidates)} candidates from {len(advisories)} advisories", None)
-        _record_intel(run_id, stack_items, candidates, advisories, emit)
+        # KEV and EPSS for the matched CVEs; a feed outage leaves intel unavailable, never fails.
+        cves = [c for a in advisories for c in cve_ids(a.advisory_id, a.aliases)]
+        intel_table = lookup(cves, emit)
+        _record_intel(run_id, stack_items, candidates, advisories, emit, intel_table)
         posture = [] if ctx.scoped_advisory_ids else _record_posture(run_id, emit)
 
         ctx.set_state("verifying")
@@ -80,7 +84,7 @@ class DependenciesSkill:
         store.insert_candidates(persisted)
 
         ctx.shared.update(candidates=candidates, advisories=adv_map, verifications=ver_map,
-                          stack_map=si_map)
+                          stack_map=si_map, intel_table=intel_table)
         nodes, edges = to_graph(stack_items, candidates, adv_map, ver_map, ctx)
         return SkillResult(
             name=self.name,

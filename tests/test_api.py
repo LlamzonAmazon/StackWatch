@@ -298,7 +298,7 @@ async def test_report_joins_evidence_chain(client, ch):
     ch.on("FROM verifications", [("c1", "verified",
                                   json.dumps([{"kind": "semgrep", "detail": "hit"}]),
                                   "Upgrade lodash", json.dumps(["semgrep:r.yaml"]))])
-    ch.on("FROM advisories", [("GHSA-1", "Prototype pollution", 1, "osv")])
+    ch.on("FROM advisories", [("GHSA-1", "Prototype pollution", 1, "osv", "[]")])
     findings = (await client.get(f"/api/runs/{RUN_ID}/report")).json()["findings"]
     f1, f2 = findings
     assert f1["package"] == "lodash" and f1["direct"] is True
@@ -374,3 +374,33 @@ async def test_replay_advisory_id_validation(client, monkeypatch, aid):
     monkeypatch.setattr(main, "DEMO_MODE", True)
     r = await client.post("/api/advisories/replay", json={"advisory_id": aid})
     assert r.status_code == 422
+
+
+async def test_report_enriches_with_kev_and_ranks_it_first(client, ch, monkeypatch, tmp_path):
+    from app.intel import threat
+
+    kev = {"vulnerabilities": [{"cveID": "CVE-2021-44228", "dateAdded": "2021-12-10",
+                                "dueDate": "2021-12-24", "knownRansomwareCampaignUse": "Known"}]}
+    epss = {"data": [{"cve": "CVE-2021-44228", "epss": "0.97", "percentile": "0.99"}]}
+
+    def fake_get(url, params, max_bytes):
+        return json.dumps(kev if url == threat.KEV_URL else epss).encode()
+
+    monkeypatch.setattr(threat, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(threat, "_http_get", fake_get)
+    monkeypatch.setattr(config, "CACHE_ONLY", False)
+    main.store.get_run.return_value = {"run_id": RUN_ID, "state": "complete"}
+    ch.on("FROM candidates", [
+        ("c1", "s1", "GHSA-1", "", "confirmed", "high", 3, None, None, ""),
+        ("c2", "s2", "GHSA-2", "", "confirmed", "low", 2, None, None, ""),
+    ])
+    ch.on("FROM stack_items", [("s1", "a", "1.0.0", 1, "confirmed", "", "npm"),
+                               ("s2", "log4js", "2.0.0", 1, "confirmed", "", "npm")])
+    ch.on("FROM verifications", [])
+    ch.on("FROM advisories", [("GHSA-1", "plain", 0, "osv", "[]"),
+                              ("GHSA-2", "log4j", 0, "osv", '["CVE-2021-44228"]')])
+    f1, f2 = (await client.get(f"/api/runs/{RUN_ID}/report")).json()["findings"]
+    assert f1["advisory_id"] == "GHSA-2" and f1["risk_score"] == 6  # 2 + KEV boost of 4
+    assert f1["intel"]["kev"] is True and f1["intel"]["kev_ransomware"] is True
+    assert f1["intel"]["epss"] == 0.97
+    assert f2["intel"]["status"] == "no-cve" and f2["risk_score"] == 3

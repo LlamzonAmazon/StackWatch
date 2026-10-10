@@ -28,7 +28,7 @@ flowchart LR
 
 1. **Discovery and recon** build an inventory. Repositories are read from their lockfile (v1 to v3); public domains are fingerprinted passively from what they serve.
 2. **Skills** each observe one thing and add nodes and edges to an exposure graph. No skill emits findings on its own.
-3. **The correlator** joins the graph into findings, scoring reach (is the vulnerable component on a route?), severity and novelty, and assembles multi-step attack chains.
+3. **The correlator** joins the graph into findings, scoring reach (is the vulnerable component on a route?), severity, novelty and exploitation signals (CISA KEV, EPSS), and assembles multi-step attack chains.
 4. **Verification** runs only on targets listed in `config/demo.yaml` as authorized. A Semgrep match upgrades a finding from `present` to `verified`.
 5. **The watcher** re-runs connected repositories on an interval and replays new advisories against stored inventories.
 
@@ -75,7 +75,7 @@ The full self-audit is in [docs/security-audit.md](docs/security-audit.md).
 
 ## Status
 
-Runs end to end on local infrastructure. Not deployed. [docs/outstanding.md](docs/outstanding.md) lists what is left, starting with the CISA KEV, NVD and EPSS cross-reference.
+Runs end to end on local infrastructure. Not deployed. [docs/outstanding.md](docs/outstanding.md) lists what is left, starting with NVD matching by CPE (CISA KEV and EPSS are in).
 
 ## Credits
 

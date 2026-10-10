@@ -11,6 +11,11 @@ from app.intel.impact import IMPACT_BASE, IMPACT_TITLE
 LEVELS = ["low", "medium", "high", "critical"]
 # Impacts that get worse when the org visibly handles payments or credentials.
 STAKES_IMPACTS = {"auth-bypass", "crypto-weakness", "data-exposure", "injection", "xss"}
+# EPSS at or above this is "likely to be exploited soon"; it is the same bar as one KEV listing.
+EPSS_HIGH = 0.5
+# Advisory-list ordering (app.main get_report): added to the 1..8 severity x status risk score.
+KEV_RISK_BOOST = 4
+EPSS_RISK_BOOST = 2
 
 
 def score_dependency(impact: str, impact_why: str, reach: Reach, cvss: str, match_type: str,
@@ -81,3 +86,29 @@ def score_exposure(severity: str, tier: str, where: str) -> tuple[str, list[str]
         lvl -= 1
         reasons.append("Sits in the repository; no route serves it and no app code loads it (-1)")
     return LEVELS[max(0, lvl)], reasons
+
+
+def intel_risk_boost(intel) -> int:
+    """Ordering boost for the advisory list: KEV outranks a high EPSS score, they do not stack."""
+    if intel is None:
+        return 0
+    if intel.kev:
+        return KEV_RISK_BOOST
+    return EPSS_RISK_BOOST if (intel.epss or 0) >= EPSS_HIGH else 0
+
+
+def score_intel(level: str, reasons: list[str], intel, reach_tier: str) -> tuple[str, list[str]]:
+    """Raise a dependency finding one level when its CVE is in KEV or has a high EPSS score.
+
+    Applied after reach scoring and never when only the lockfile holds the package: exploitation
+    in the wild does not matter if nothing in the app can call the code.
+    """
+    if intel is None or not (intel.kev or (intel.epss or 0) >= EPSS_HIGH):
+        return level, reasons
+    why = ("Listed in CISA KEV as exploited in the wild" if intel.kev else
+           f"EPSS {intel.epss:.2f}, in the top {max(1, round((1 - (intel.epss_percentile or 0)) * 100))}%"
+           " of CVEs by exploitation likelihood")
+    if reach_tier == "installed":
+        return level, reasons + [f"{why}, but nothing in the app reaches it (no change)"]
+    lvl = min(LEVELS.index(level) + 1, len(LEVELS) - 1) if level in LEVELS else 1
+    return LEVELS[lvl], reasons + [f"{why} (+1)"]
