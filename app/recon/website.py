@@ -289,6 +289,8 @@ def extract_web(page: FetchedPage, parsed: _PageParser, domain: str) -> dict:
             h: ("present" if h in headers else "missing") for h in SECURITY_HEADERS
         },
         "scripts": scripts,
+        "stylesheets": [urljoin(page.final_url, h) for rel, h in parsed.links
+                        if "stylesheet" in rel][:60],
         "external_hosts": external[:40],
     }
 

@@ -26,7 +26,7 @@ flowchart LR
     CH --> UI[Web console]
 ```
 
-1. **Discovery and recon** build an inventory. Repositories are read from their lockfile (v1 to v3); public domains are fingerprinted passively from what they serve.
+1. **Discovery and recon** build an inventory. Repositories are read from their lockfile (v1 to v3); public domains are fingerprinted passively from what they serve, including versions from headers, asset names and bundle banners.
 2. **Skills** each observe one thing and add nodes and edges to an exposure graph. No skill emits findings on its own.
 3. **The correlator** joins the graph into findings, scoring reach (is the vulnerable component on a route?), severity, novelty and exploitation signals (CISA KEV, EPSS), and assembles multi-step attack chains.
 4. **Verification** runs only on targets listed in `config/demo.yaml` as authorized. A Semgrep match upgrades a finding from `present` to `verified`.

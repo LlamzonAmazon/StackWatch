@@ -4,6 +4,7 @@ This only restates evidence the collectors already recorded (ASN owner, nameserv
 issuer, response headers, app bundle, third-party hosts). It does not probe anything.
 """
 
+from app.recon.fingerprint import fingerprint_web
 from app.recon.kb import KnowledgeBase, Tech
 
 NS_PROVIDERS = [
@@ -45,9 +46,10 @@ THIRD_PARTY = [
 def derive_stack(kb: KnowledgeBase) -> None:
     site = kb.web.get("final_url") or f"https://{kb.domain}/"
 
-    def add(name, cat, ev, src, conf="high", ver=None):
+    def add(name, cat, ev, src, conf="high", ver=None, npm=None):
         kb.add_tech(Tech(
-            name=name, category=cat, version=ver, confidence=conf, evidence=ev, source=src))
+            name=name, category=cat, version=ver, npm=npm, confidence=conf, evidence=ev,
+            source=src))
 
     if kb.infra.get("hosting"):
         asns = ", ".join(sorted({f"AS{i.get('asn')}" for i in kb.infra.get("ips") or []
@@ -75,16 +77,11 @@ def derive_stack(kb: KnowledgeBase) -> None:
         if header in headers:
             add(name, cat, f"{header}: {str(headers[header])[:80]}", site)
     platforms = {t.name.lower().split()[0] for t in kb.stack}
-    server = str(kb.web.get("server") or "")
-    if server and server.split("/")[0].split(".")[0].lower() not in platforms:
-        name, _, ver = str(kb.web["server"]).partition("/")
-        add(name.strip() or kb.web["server"], "web-server", f"Server: {kb.web['server']}", site,
-            "high", ver.split()[0] if ver else None)
-    if kb.web.get("powered_by"):
-        add(str(kb.web["powered_by"]), "framework", f"X-Powered-By: {kb.web['powered_by']}",
-            site, "medium")
-    if kb.web.get("generator"):
-        add(str(kb.web["generator"]), "cms", f"Generator meta: {kb.web['generator']}", site)
+    # Versions come from the fingerprinter (Server, X-Powered-By, generator, asset URLs, banners).
+    for fp in fingerprint_web(kb.web):
+        if fp.category == "web-server" and fp.name.lower().split(".")[0] in platforms:
+            continue  # e.g. "Server: cloudflare" is the CDN already listed above
+        add(fp.name, fp.category, fp.evidence, fp.source, fp.confidence, fp.version, fp.npm)
 
     spa = kb.web.get("spa") or {}
     bundle = (spa.get("bundles") or [{}])[0].get("url", site)

@@ -33,7 +33,7 @@ sequenceDiagram
 ### 1. Discovery (`app/discovery`)
 
 - **Repositories:** parse `package-lock.json` (v1, v2, v3) into exact direct and transitive versions. If no lockfile exists, `npm install --package-lock-only --ignore-scripts` generates one. Repo paths must resolve inside `ALLOWED_REPO_ROOTS`.
-- **Public domains:** fetch the site through `safe_fetch` and fingerprint versioned libraries from served assets.
+- **Public domains:** fetch the site through `safe_fetch` and fingerprint versioned libraries from served assets. Versions are read passively by `app/recon/fingerprint.py` from data recon already holds (no extra requests): `Server` / `X-Powered-By` / `X-AspNet-Version` headers, meta generator, known-library filenames and CDN paths, `?ver=` on WordPress assets, and the leading license comment of bundles that were already downloaded. Only curated products are named, and a version must look like a release number, so cache-busting hashes, timestamps and date stamps never become versions. Confidence: high for explicit banners and CDN pins, medium for filenames and WordPress core `?ver=`, low for a bare query value or a plugin or theme `?ver=`. Distribution builds backport fixes without changing the banner, so a version here means "reports as", not "is vulnerable". Libraries with a high or medium confidence version also become npm stack items for OSV matching.
 
 ### 2. Recon and knowledge base (`app/recon`, `app/agent`)
 

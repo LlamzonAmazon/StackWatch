@@ -11,6 +11,7 @@ from urllib.parse import urljoin, urlsplit
 
 from app.discovery.net import fetch_page
 from app.recon.domain import in_scope
+from app.recon.fingerprint import bundle_banners
 from app.recon.kb import FetchedPage, KnowledgeBase
 from app.schema import Emit
 
@@ -120,6 +121,7 @@ def read_spa(kb: KnowledgeBase, home: FetchedPage, scripts: list[str], emit: Emi
     links: list[str] = []
     emails: list[str] = []
     frameworks: list[str] = []
+    banners: list[dict] = []
     read = []
     for url in urls:
         raw = fetch_page(url, kb.target_id, emit, max_body=BUNDLE_CAP,
@@ -134,11 +136,12 @@ def read_spa(kb: KnowledgeBase, home: FetchedPage, scripts: list[str], emit: Emi
         links += [u for u in mined["links"] if u not in links]
         emails += [e for e in mined["emails"] if e not in emails]
         frameworks += [n for n, rx in FRAMEWORK_HINTS if rx.search(js) and n not in frameworks]
+        banners += [b for b in bundle_banners(js, url) if all(b["key"] != x["key"] for x in banners)]
     builds = [n for n, rx in BUILD_HINTS if any(rx.search(u) for u in urls)]
 
     text = "\n".join(copy)[:COPY_CAP]
     kb.web["spa"] = {"bundles": read, "routes": routes[:40], "links": links[:60],
-                     "emails": emails, "frameworks": frameworks, "build": builds,
+                     "emails": emails, "frameworks": frameworks, "build": builds, "banners": banners,
                      "copy": text.split("\n")}
     emit("discovery", "info",
          f"App bundle: {len(copy)} text strings, {len(routes)} routes, {len(links)} links"

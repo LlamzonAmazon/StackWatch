@@ -49,6 +49,18 @@ def discover_public(target: Target, run_id: str, emit: Emit) -> list[StackItem]:
         items.extend(_extract_from_headers(target, run_id, page.headers, url, seen_packages))
         items.extend(_extract_from_content(target, run_id, page.html, url, seen_packages))
 
+    # Versioned JS libraries the passive fingerprinter found in asset URLs and bundle banners.
+    # Low-confidence readings (a bare ?ver= query) stay in the stack list but are not matched.
+    taken = {s.lower() for s in seen_packages} | {i.package for i in items if i.package}
+    for t in kb.stack:
+        if t.npm and t.version and t.confidence != "low" and t.npm.lower() not in taken:
+            taken.add(t.npm.lower())
+            item = _make_item(target, run_id, t.name, t.npm, t.version, t.source, t.evidence,
+                              seen_packages)
+            if item:
+                item.confidence = t.confidence
+                items.append(item)
+
     for item in items:
         kb.add_tech(Tech(
             name=item.name or item.package or "?", category="js-library", version=item.version,
