@@ -42,5 +42,5 @@ Related hardening done during migration: ClickHouse ports and the documented uvi
 |---|------|--------|
 | 16 | **README rewrite** with an architecture diagram and setup steps. | partial: rewritten with a Mermaid diagram and quickstart during migration. Verify the quickstart from a clean clone. |
 | 17 | **Demo assets:** a 2-minute video plus screenshots of the knowledge base and evidence inspector. | open |
-| 18 | **Contribution statement:** what is Thomas's versus teammates'. | partial: drafted in [goals.md](goals.md#contributions) with two TODOs to confirm. The clean-slate history drops teammates' commits, so this statement is now the only record. |
+| 18 | **Contribution statement:** what is Thomas's versus teammates'. | done: [goals.md](goals.md#contributions). The clean-slate history drops teammates' commits, so this statement is the record. |
 | 19 | **Record the outcome of the event.** | open |

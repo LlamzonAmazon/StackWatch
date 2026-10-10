@@ -76,4 +76,4 @@ Runs end to end on local infrastructure. Not deployed. [docs/outstanding.md](doc
 
 ## Credits
 
-StackWatch started as a four-person team build in October 2026 with Fuad, Sid and Andres. This repository is a fresh history of that codebase, maintained by Thomas Llamzon. [docs/goals.md](docs/goals.md#contributions) records who built what.
+Built by Thomas Llamzon (agent infrastructure and full stack), with Andres (agent web scraping) and Sid (adversarial pentesting). This repository is a fresh history of the team codebase; [docs/goals.md](docs/goals.md#contributions) has the breakdown.

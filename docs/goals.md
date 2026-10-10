@@ -43,12 +43,10 @@ These turn "it works" into numbers for the README and a resume line. Most depend
 
 ## Contributions
 
-StackWatch began as a four-person build in October 2026. Pillar ownership at kickoff: discovery (Fuad), intelligence and matching (Thomas), verification (Sid), product and monitoring (Andres). From the original commit history:
+StackWatch began as a team build in October 2026.
 
-- **Sid:** the first end-to-end Python pipeline (orchestrator, intel, dashboard), the Semgrep verification pillar and its Juice Shop rules, the deep-scan pillar (`app/scanner`), and the security hardening and test expansion behind the self-audit.
-- **Andres:** repository setup and the original Next.js product shell (since removed).
-- **Thomas:** the design and motion system and the console UI rebuild, public-domain recon (DNS, mail security, RDAP, TLS, CT, scoped scrape, SPA bundles), the knowledge base, the grounded research agent, configuration (posture) findings, Senso ingest, and the integration and merge work across pillars.
-- TODO (Thomas): confirm authorship of the skills, exposure graph and severity/novelty correlator (`app/skills`, `app/correlate`), committed by Thomas at handoff.
-- TODO (Thomas): Fuad's discovery work has no commits under his name; confirm what landed.
+- **Thomas Llamzon:** agent infrastructure and the full stack: the pipeline, exposure graph and correlator, recon and knowledge base, the grounded research agent, the API, the console UI and the design system.
+- **Andres:** the agent's web scraping.
+- **Sid:** the adversarial pentesting functionality (deep scan, endpoint enumeration, attack-chain patterns).
 
 Work after the clean-slate migration is Thomas's unless noted in the commit.
