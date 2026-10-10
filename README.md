@@ -1,5 +1,7 @@
 # StackWatch
 
+[![CI](https://github.com/LlamzonAmazon/StackWatch/actions/workflows/ci.yml/badge.svg)](https://github.com/LlamzonAmazon/StackWatch/actions/workflows/ci.yml)
+
 StackWatch is an exposure agent. Point it at a public domain or a connected repository and it answers three questions: what is this target running, which published vulnerabilities affect it, and which of those are actually reachable.
 
 It inventories the stack (lockfiles, live site assets, DNS, TLS, mail security, certificate transparency), matches every resolved `package@version` against OSV advisories with deterministic semver logic, and then tries to prove or rule out each match with Semgrep reachability rules and scoped runtime checks. Every finding links to the evidence that produced it.
@@ -37,7 +39,7 @@ More detail: [docs/architecture.md](docs/architecture.md).
 Requires Python 3.12, [uv](https://docs.astral.sh/uv/), Docker, Node (for lockfile generation) and the Semgrep CLI. Ollama is optional; without it the research agent is skipped and recon still runs.
 
 ```bash
-uv venv --python 3.12 && uv pip install -r pyproject.toml
+uv venv --python 3.12 && uv pip install -r pyproject.toml --extra dev   # dev adds pytest and ruff
 cp .env.example .env            # fill in ClickHouse credentials and STACKWATCH_API_KEYS
 set -a; source .env; set +a
 scripts/setup_demo.sh           # clones OWASP Juice Shop, starts ClickHouse, applies schema, loads OSV
@@ -46,7 +48,7 @@ DEMO_MODE=1 .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 300
 
 Open http://127.0.0.1:3003 and scan `demo/juice-shop`, or a domain you are allowed to scan.
 
-Tests: `.venv/bin/python -m pytest -q` (no ClickHouse or network needed).
+Tests: `.venv/bin/python -m pytest -q` (no ClickHouse or network needed). Lint: `.venv/bin/ruff check .`. CI runs both on every push to `main` and every pull request.
 
 ## Security model
 

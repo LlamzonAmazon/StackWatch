@@ -30,7 +30,7 @@ Related hardening done during migration: ClickHouse ports and the documented uvi
 
 | # | Item | Status |
 |---|------|--------|
-| 11 | **No CI**, about 50 pre-existing ruff errors, and a Python version mismatch (`pyproject.toml` says 3.12, the old venv was 3.11). | open |
+| 11 | **No CI**, pre-existing ruff errors, and a Python version mismatch (an old local venv was 3.11; `pyproject.toml` requires 3.12). | done: ruff is clean under an explicit rule selection in `pyproject.toml`, `.github/workflows/ci.yml` runs ruff and pytest on Python 3.12 with SHA-pinned actions and read-only permissions, and `pytest`/`ruff` moved to the `dev` extra. |
 | 12 | **`config/demo.yaml` is rewritten at runtime** (demo replay and `setup_demo.sh`), so it always shows as modified. Move runtime state out of it. See audit L-3. | open |
 | 13 | **Dead code:** the original OpenAI explanation module (`app/intel/explain.py`) is never called. Delete it or route it through the shared LLM client in `app/agent/llm.py`. | open |
 | 14 | **No agent evaluation.** Run live on about 3 domains only. A 10 to 20 domain eval set would give fact precision, rejection rate and latency (about 47s now). | open |
