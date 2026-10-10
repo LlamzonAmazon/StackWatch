@@ -2,8 +2,8 @@
 
 import re
 
-from app.schema import Candidate, Advisory, Emit
 from app.config import OPENAI_API_KEY, OPENAI_MODEL
+from app.schema import Advisory, Candidate, Emit
 
 
 def generate_explanation(candidate: Candidate, advisory: Advisory, emit: Emit) -> str | None:
@@ -41,7 +41,7 @@ Be factual. Only reference information from the input."""
 
         return explanation
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - LLM explanation is best effort
         emit("intel", "warn", f"Explanation generation failed: {e}", None)
         return None
 

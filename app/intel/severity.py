@@ -1,6 +1,7 @@
 """Severity computation from advisory data."""
 
 from cvss import CVSS3
+from cvss.exceptions import CVSSError
 
 
 def compute_severity(data: dict) -> str:
@@ -31,7 +32,7 @@ def compute_severity(data: dict) -> str:
                         return "medium"
                     else:
                         return "low"
-                except:
+                except CVSSError:
                     pass
 
     return "unknown"

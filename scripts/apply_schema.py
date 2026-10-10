@@ -8,6 +8,7 @@ from pathlib import Path
 
 import clickhouse_connect
 
+
 def create_app_user(client, admin_user: str) -> None:
     """Create the runtime user with INSERT and SELECT only, credentials from the environment."""
     app_user = os.environ.get("CLICKHOUSE_USER", "")

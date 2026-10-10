@@ -3,13 +3,12 @@
 import json
 import time
 from pathlib import Path
-from typing import Any
 
 import httpx
 
-from app.schema import Advisory, AffectedRange, Emit
 from app.config import CACHE_ONLY
 from app.intel.severity import compute_severity
+from app.schema import Advisory, AffectedRange, Emit
 
 OSV_QUERY_URL = "https://api.osv.dev/v1/querybatch"
 OSV_VULN_URL = "https://api.osv.dev/v1/vulns"
@@ -51,7 +50,7 @@ def query_batch(packages: list[dict], emit: Emit) -> list[str]:
                     for vuln in result.get("vulns", []):
                         advisory_ids.add(vuln.get("id"))
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - OSV lookup is best effort
             emit("intel", "warn", f"OSV query failed: {e}", None)
 
     return list(advisory_ids)
@@ -67,7 +66,7 @@ def fetch_advisory(advisory_id: str, emit: Emit) -> Advisory | None:
         try:
             data = json.loads(cache_path.read_text())
             return _parse_advisory(data, emit)
-        except Exception:
+        except (OSError, ValueError):
             pass
 
     if CACHE_ONLY:
@@ -84,7 +83,7 @@ def fetch_advisory(advisory_id: str, emit: Emit) -> Advisory | None:
 
             return _parse_advisory(data, emit)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - OSV lookup is best effort
         emit("intel", "warn", f"Failed to fetch {advisory_id}: {e}", None)
         return None
 
@@ -160,20 +159,20 @@ def _parse_advisory(data: dict, emit: Emit) -> Advisory | None:
 
         if data.get("published"):
             try:
-                published = datetime.fromisoformat(data["published"].replace("Z", "+00:00"))
-            except:
+                published = datetime.fromisoformat(data["published"])
+            except (ValueError, AttributeError):
                 pass
 
         if data.get("modified"):
             try:
-                modified = datetime.fromisoformat(data["modified"].replace("Z", "+00:00"))
-            except:
+                modified = datetime.fromisoformat(data["modified"])
+            except (ValueError, AttributeError):
                 pass
 
         if data.get("withdrawn"):
             try:
-                withdrawn = datetime.fromisoformat(data["withdrawn"].replace("Z", "+00:00"))
-            except:
+                withdrawn = datetime.fromisoformat(data["withdrawn"])
+            except (ValueError, AttributeError):
                 pass
 
         # Severity
@@ -203,6 +202,6 @@ def _parse_advisory(data: dict, emit: Emit) -> Advisory | None:
             source_url=f"https://osv.dev/vulnerability/{advisory_id}",
         )
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - OSV lookup is best effort
         emit("intel", "warn", f"Failed to parse advisory: {e}", None)
         return None

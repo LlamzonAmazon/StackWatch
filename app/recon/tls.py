@@ -124,6 +124,6 @@ def collect_tls(kb: KnowledgeBase, emit: Emit) -> None:
         emit("discovery", "info",
              f"TLS: {version}, issuer={info.get('issuer') or '?'}, "
              f"{info.get('days_left', '?')} days left", None)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - collector failure degrades coverage
         kb.coverage["tls"] = "failed"
         emit("discovery", "warn", f"TLS collector failed: {e}", None)

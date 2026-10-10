@@ -1,11 +1,10 @@
 """Advisory watcher for continuous monitoring."""
 
 import time
-from datetime import datetime
 
-from app.schema import Target, StackItem, Advisory, Emit
-from app.intel.osv import query_batch, fetch_advisories_batch
 from app.config import load_demo_config
+from app.intel.osv import fetch_advisories_batch, query_batch
+from app.schema import Advisory, Emit, StackItem, Target
 
 
 def poll_advisories(
@@ -66,8 +65,9 @@ def poll_advisories(
 
 def release_holdback(advisory_id: str, emit: Emit) -> bool:
     """Release a held-back advisory for demo replay."""
-    import yaml
     from pathlib import Path
+
+    import yaml
 
     config_path = Path("config/demo.yaml")
     if not config_path.exists():

@@ -3,7 +3,7 @@
 import asyncio
 import hashlib
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from app import events as ev
 from app import store
@@ -19,7 +19,7 @@ _background: set[asyncio.Task] = set()
 
 
 def _make_run_id() -> str:
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(UTC).replace(tzinfo=None).strftime("%Y%m%d_%H%M%S")
     return f"r_{ts}_{uuid.uuid4().hex[:4]}"
 
 
@@ -32,7 +32,7 @@ def _update_run_state(run: Run, state: RunState, error: str | None = None) -> No
     if error:
         run.error = error
     if state in ("complete", "failed"):
-        run.finished_ts = datetime.utcnow()
+        run.finished_ts = datetime.now(UTC).replace(tzinfo=None)
     store.insert_run(run)
 
 
@@ -51,7 +51,7 @@ def _risk_score(severity: str, status: str, match_type: str, item_status: str) -
 
 
 def _rehydrate_inventory(raw: list[dict], target_id: str, run_id: str) -> list[StackItem]:
-    now = datetime.utcnow()
+    now = datetime.now(UTC).replace(tzinfo=None)
     return [StackItem(**r, target_id=target_id, run_id=run_id, ts=now) for r in raw]
 
 
@@ -61,7 +61,7 @@ def _new_run(target: Target, trigger: RunTrigger) -> Run:
         target_id=target.target_id,
         trigger=trigger,
         state="queued",
-        started_ts=datetime.utcnow(),
+        started_ts=datetime.now(UTC).replace(tzinfo=None),
     )
     _runs[run.run_id] = run
     store.insert_run(run)
@@ -138,7 +138,7 @@ def _restore_lock_edges(stack_items: list[StackItem], target: Target) -> None:
 
     try:
         fresh = {s.package: s for s in discover_repo(target, "", lambda *_: None)}
-    except Exception:
+    except Exception:  # noqa: BLE001 - background pipeline stages must not kill the run
         return
     for s in stack_items:
         f = fresh.get(s.package)
@@ -310,7 +310,7 @@ def _finish_knowledge(run_id: str, status: str, emit: Emit) -> None:
         return
     try:
         senso.ingest_kb(kb, emit)
-    except Exception as e:  # never let the integration fail a finished run
+    except Exception as e:  # noqa: BLE001 - background pipeline stages must not kill the run
         kb.coverage["senso"] = "failed"
         kb.senso = {"state": "failed", "error": "unexpected error"}
         emit("report", "warn", f"Senso ingest failed: {type(e).__name__}", None)
@@ -330,7 +330,7 @@ def _run_deep_scans(target, run_id, stack_items, candidates, emit) -> None:
         threats = threat_patterns.surface_threats(
             candidates, stack_items, endpoints, vuln_findings, emit
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - background pipeline stages must not kill the run
         emit("report", "warn", f"Threat surfacing failed: {e}", None)
     scanner.store_scan_results(run_id, "threats", threats)
 
@@ -387,13 +387,13 @@ async def _run_and_followup(run: Run, target: Target, scoped_advisory_ids: list[
     tid = target.target_id
     try:
         await run_pipeline(run, target, scoped_advisory_ids)
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 - background pipeline stages must not kill the run
         pass  # already recorded on the run and emitted to the feed
     finally:
         _active.pop(tid, None)
         if tid in _pending:
             next_run, next_ids = _pending.pop(tid)
-            next_run.started_ts = datetime.utcnow()
+            next_run.started_ts = datetime.now(UTC).replace(tzinfo=None)
             _active[tid] = asyncio.create_task(_run_and_followup(next_run, target, next_ids))
 
 
@@ -418,7 +418,7 @@ async def poll_target(target: Target) -> list[str]:
         new_advisories: list[Advisory] = await asyncio.to_thread(
             poll_advisories, target, inventory, known_ids, emit
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - background pipeline stages must not kill the run
         emit("monitor", "error", f"Poll failed: {e}", None)
         return []
 
@@ -446,7 +446,7 @@ async def watcher_loop() -> None:
         for target in list(_targets.values()):
             try:
                 await poll_target(target)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - background pipeline stages must not kill the run
                 _emit(target.target_id)("monitor", "error", f"Watcher error: {e}", None)
 
 

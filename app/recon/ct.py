@@ -99,7 +99,7 @@ def collect_subdomains(kb: KnowledgeBase, emit: Emit, cap: int = 300) -> None:
             names = clean_names(fn(domain), domain, cap)
             source = src
             break
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - collector failure degrades coverage
             emit("discovery", "warn", f"Subdomains: {src} failed ({e})", None)
 
     if source is None:
@@ -115,7 +115,7 @@ def collect_subdomains(kb: KnowledgeBase, emit: Emit, cap: int = 300) -> None:
         to_resolve = order[:RESOLVE_CAP]
         with ThreadPoolExecutor(max_workers=10) as pool:
             results = list(pool.map(lambda s: lookup(s.name, "A", timeout=3.0), to_resolve))
-        for sub, ips in zip(to_resolve, results):
+        for sub, ips in zip(to_resolve, results, strict=True):
             sub.ips = [ip for ip in ips if not is_private_ip(ip)]
             if ips and not sub.ips:
                 kb.add_fact("subdomain", sub.name, "resolves to a private address", "dns:A",
@@ -129,6 +129,6 @@ def collect_subdomains(kb: KnowledgeBase, emit: Emit, cap: int = 300) -> None:
         kb.coverage["subdomains"] = "ok" if source == "crt.sh" else "partial"
         emit("discovery", "info",
              f"Subdomains: {len(order)} from {source}, {len(flagged)} flagged", None)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - collector failure degrades coverage
         kb.coverage["subdomains"] = "failed"
         emit("discovery", "warn", f"Subdomain collector failed: {e}", None)

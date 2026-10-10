@@ -3,10 +3,12 @@ Data contract models per spec section 6 (v1.1).
 Single source of truth for all pillars.
 """
 
-from datetime import datetime
-from typing import Literal, Callable
-from pydantic import BaseModel, Field
 import uuid
+from collections.abc import Callable
+from datetime import datetime
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 # Type aliases
 TargetKind = Literal["public", "connected_repo", "owned_deployment"]

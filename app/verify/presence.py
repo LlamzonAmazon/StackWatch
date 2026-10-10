@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from app.schema import Candidate, StackItem, Emit
+from app.schema import Candidate, Emit, StackItem
 
 
 def check_presence(
@@ -36,7 +36,7 @@ def check_presence(
             elif "dependencies" in lock:
                 _collect_v1_deps(lock["dependencies"], lockfile_packages)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - lockfile parse failure is reported
             emit("verification", "warn", f"Failed to parse lockfile: {e}", None)
 
     # Check each candidate
@@ -66,7 +66,7 @@ def check_presence(
                         in_node_modules = True
                     elif not version:
                         in_node_modules = True  # Version unknown, just check presence
-                except:
+                except (OSError, ValueError, AttributeError):
                     pass
 
         # Present if in lockfile OR node_modules

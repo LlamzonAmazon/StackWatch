@@ -23,3 +23,26 @@ dev = ["pytest", "ruff"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[tool.ruff.lint]
+# Explicit so CI and local runs agree regardless of ruff version defaults.
+# E501 is left out: line length is a formatting concern, not a lint gate.
+select = [
+    "E4", "E7", "E9",  # pycodestyle errors (imports, statements, syntax)
+    "F",               # pyflakes
+    "I",               # import sorting
+    "B",               # bugbear
+    "UP",              # pyupgrade
+    "C4",              # comprehensions
+    "DTZ002", "DTZ003", "DTZ004",  # naive "now"/utc helpers
+    "BLE",             # blind except
+    "S110", "S112",    # silent try/except pass and continue
+    "PLW1510",         # subprocess.run without explicit check
+    "PLR0402",         # manual from-import
+    "FURB",
+    "ISC004",
+    "PERF402",
+    "SIM103",
+    "EXE",
+    "RUF100",          # unused noqa
+]

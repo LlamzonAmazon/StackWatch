@@ -6,9 +6,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-import app.config as config
-from app.discovery import discover
-from app.discovery import net, public
+from app import config
+from app.discovery import discover, net, public
 from app.discovery import repo as repo_mod
 from app.discovery.aliases import resolve_alias
 from app.discovery.repo import _extract_package_name, discover_repo

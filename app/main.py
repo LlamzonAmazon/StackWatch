@@ -85,7 +85,7 @@ class CreateTargetRequest(BaseModel):
             return v
         try:
             parsed = urlparse(v)
-            parsed.port
+            _ = parsed.port  # accessing .port raises ValueError on a bad port
         except ValueError as e:
             raise ValueError(f"invalid deploy_url: {e}") from None
         if parsed.scheme not in ("http", "https") or not parsed.hostname:
@@ -163,7 +163,7 @@ async def create_target(req: CreateTargetRequest):
         try:
             domain = normalize_domain(req.domain or req.name)
         except ValueError as e:
-            raise HTTPException(400, f"Invalid domain: {e}")
+            raise HTTPException(400, f"Invalid domain: {e}") from None
     target = Target(
         target_id=target_id,
         kind=req.kind,
@@ -417,9 +417,9 @@ async def get_events(
     since_dt = None
     if since:
         try:
-            since_dt = datetime.fromisoformat(since.replace("Z", "+00:00")).replace(tzinfo=None)
+            since_dt = datetime.fromisoformat(since).replace(tzinfo=None)
         except ValueError:
-            raise HTTPException(400, "Invalid 'since' timestamp")
+            raise HTTPException(400, "Invalid 'since' timestamp") from None
     return store.get_events(target_id, since_dt)
 
 
@@ -470,7 +470,7 @@ async def health():
     try:
         store.get_client().query("SELECT 1")
         ch_ok = True
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 - any ClickHouse failure means degraded
         pass
     return {"status": "ok" if ch_ok else "degraded", "clickhouse": ch_ok, "demo_mode": DEMO_MODE}
 

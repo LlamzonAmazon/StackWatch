@@ -328,7 +328,7 @@ def _dnssec(domain: str) -> bool | None:
         q.flags |= dns.flags.AD
         resp = dns.query.udp(q, RESOLVERS[0], timeout=4.0)
         return bool(resp.flags & dns.flags.AD)
-    except Exception:
+    except Exception:  # noqa: BLE001 - collector failure degrades coverage
         return None
 
 
@@ -386,7 +386,7 @@ def collect_dns(kb: KnowledgeBase, emit: Emit) -> None:
             emit("discovery", "info",
                  f"DNS: {len(res['a'])} A, {len(kb.dns['ns'])} NS, {len(mx)} MX, "
                  f"{len(res['txt'])} TXT", None)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - collector failure degrades coverage
         kb.coverage["dns"] = "failed"
         emit("discovery", "warn", f"DNS collector failed: {e}", None)
 
@@ -450,7 +450,7 @@ def collect_mail(kb: KnowledgeBase, emit: Emit) -> None:
         emit("discovery", "info",
              f"Mail: provider={provider or 'unknown'}, SPF={'yes' if spf else 'no'}, "
              f"DMARC={dmarc['policy'] if dmarc else 'missing'}", None)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - collector failure degrades coverage
         kb.coverage["mail"] = "failed"
         emit("discovery", "warn", f"Mail collector failed: {e}", None)
 
@@ -494,6 +494,6 @@ def collect_asn(kb: KnowledgeBase, emit: Emit) -> None:
         kb.coverage["asn"] = "ok" if len(rows) == len(ips) else "partial"
         emit("discovery", "info", f"ASN: {', '.join('AS' + r['asn'] for r in rows) or 'none'}"
              f"{f' ({hosting})' if hosting else ''}", None)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - collector failure degrades coverage
         kb.coverage["asn"] = "failed"
         emit("discovery", "warn", f"ASN collector failed: {e}", None)

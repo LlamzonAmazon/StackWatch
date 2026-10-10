@@ -23,8 +23,8 @@ TIER_RANK = {"exposed": 3, "called": 2, "imported": 1, "installed": 0}
 SECRET_TYPES = {"secret_exposure", "npmrc_auth_token"}
 MAX_MODEL_SYMBOLS = 15
 STAKES_ROUTES = [
-    ("sign-in", re.compile(r"login|signin|sign-in|password|reset|2fa|totp|oauth|token", re.I)),
-    ("payments", re.compile(r"payment|checkout|wallet|card|order|basket|cart", re.I)),
+    ("sign-in", re.compile(r"login|signin|sign-in|password|reset|2fa|totp|oauth|token", re.IGNORECASE)),
+    ("payments", re.compile(r"payment|checkout|wallet|card|order|basket|cart", re.IGNORECASE)),
 ]
 
 
@@ -88,7 +88,7 @@ def dependency_findings(graph, ctx, engine: Reachability, stakes, client, model)
             model_calls += 1
             try:
                 sym = model_symbol(a, client, model)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - LLM symbol extraction is best effort
                 ctx.emit("report", "warn", f"Symbol extraction failed for {a.advisory_id}: {e}",
                          None)
                 sym = None

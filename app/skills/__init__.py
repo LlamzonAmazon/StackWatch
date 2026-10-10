@@ -5,9 +5,10 @@ map, the live attack surface, secrets on disk, public recon) and contributes nod
 the exposure graph. No skill produces findings on its own; app.correlate joins their output.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Literal, Protocol
+from typing import Any, Literal, Protocol
 
 from app.correlate.graph import Edge, Node
 from app.schema import Emit, StackItem, Target
@@ -58,7 +59,7 @@ def run_skill(skill: Skill, ctx: SkillContext) -> SkillResult:
         return SkillResult(name=skill.name, status="skipped", detail="not applicable to target")
     try:
         result = skill.run(ctx)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - a failing skill must not abort the report
         ctx.emit("report", "warn", f"Skill {skill.name} failed: {e}", None)
         return SkillResult(name=skill.name, status="failed", detail=f"{type(e).__name__}: {e}"[:300])
     ctx.emit("report", "info", f"Skill {skill.name}: {result.status}"

@@ -25,8 +25,8 @@ SENSITIVE_PATHS = (
     "/.aws/credentials", "/.npmrc", "/actuator", "/server-status", "/phpinfo.php",
 )
 
-_ATTR_RE = re.compile(r"""\b(?:href|src|action|data-url)\s*=\s*["']([^"'<>\s]+)["']""", re.I)
-_LOC_RE = re.compile(r"<loc>\s*([^<\s]+)\s*</loc>", re.I)
+_ATTR_RE = re.compile(r"""\b(?:href|src|action|data-url)\s*=\s*["']([^"'<>\s]+)["']""", re.IGNORECASE)
+_LOC_RE = re.compile(r"<loc>\s*([^<\s]+)\s*</loc>", re.IGNORECASE)
 _TECH_HEADERS = ("server", "x-powered-by", "x-aspnet-version", "x-generator", "via")
 
 
@@ -101,7 +101,7 @@ def enumerate_endpoints(target: Target, run_id: str, emit: Emit) -> list[dict]:
     robots, _ = safe_fetch(f"{base}/robots.txt", target.target_id, emit)
     if robots:
         for line in robots.splitlines():
-            m = re.match(r"\s*(?:dis)?allow\s*:\s*(\S+)", line, re.I)
+            m = re.match(r"\s*(?:dis)?allow\s*:\s*(\S+)", line, re.IGNORECASE)
             if m and m.group(1) not in ("", "/"):
                 add(urljoin(base + "/", m.group(1).lstrip("/")), "robots.txt")
 
@@ -160,7 +160,7 @@ def fingerprint_endpoints(endpoints: list[dict], target: Target, emit: Emit) -> 
     for ep in endpoints[:MAX_FINGERPRINT]:
         try:
             body, headers = safe_fetch(ep["url"], target.target_id, emit)
-        except Exception as e:  # one bad endpoint never kills the sweep
+        except Exception as e:  # noqa: BLE001 - one bad endpoint never kills the sweep
             emit("discovery", "warn", f"Fingerprint failed for {ep['url']}: {e}", None)
             enriched.append(ep)
             continue
@@ -191,7 +191,6 @@ def fingerprint_endpoints(endpoints: list[dict], target: Target, emit: Emit) -> 
 
         enriched.append(ep)
 
-    for ep in endpoints[MAX_FINGERPRINT:]:
-        enriched.append(ep)
+    enriched.extend(endpoints[MAX_FINGERPRINT:])
     emit("discovery", "info", f"Fingerprinted {min(len(endpoints), MAX_FINGERPRINT)} endpoints", None)
     return enriched

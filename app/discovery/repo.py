@@ -2,14 +2,14 @@
 
 import hashlib
 import json
+import shutil
 import subprocess
 import tempfile
-import shutil
 from pathlib import Path
 
 from app import config
-from app.schema import Target, StackItem, Emit
 from app.ids import stack_item_id
+from app.schema import Emit, StackItem, Target
 
 LOCK_CACHE_DIR = Path(__file__).resolve().parents[2] / "data" / "cache" / "lockfiles"
 
@@ -92,6 +92,7 @@ def _resolve_lockfile(repo_path: Path, emit: Emit) -> Path | None:
                 capture_output=True,
                 text=True,
                 timeout=120,
+                check=False,
             )
 
             if result.returncode == 0:
@@ -109,7 +110,7 @@ def _resolve_lockfile(repo_path: Path, emit: Emit) -> Path | None:
         emit("discovery", "warn", "npm install timed out", None)
     except FileNotFoundError:
         emit("discovery", "warn", "npm not available", None)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - lockfile resolution is best effort
         emit("discovery", "warn", f"Lockfile resolution failed: {e}", None)
 
     return None

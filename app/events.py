@@ -1,8 +1,9 @@
 """Event emission utilities."""
 
-from datetime import datetime
-from app.schema import Event, EventStage, EventLevel
+from datetime import UTC, datetime
+
 from app import store
+from app.schema import Event, EventLevel, EventStage
 
 
 def emit_event(
@@ -20,7 +21,7 @@ def emit_event(
         level=level,
         message=message,
         ref_id=ref_id,
-        ts=datetime.utcnow(),
+        ts=datetime.now(UTC).replace(tzinfo=None),
     )
     store.insert_event(event)
     return event

@@ -41,22 +41,22 @@ CWE_IMPACT = {
 KEYWORDS = [
     ("rce", r"remote code execution|arbitrary code|command injection|code injection|\brce\b"),
     ("sandbox-escape", r"sandbox (?:escape|bypass|breakout)|escape the sandbox"),
-    ("auth-bypass", r"authentication bypass|authori[sz]ation bypass|forge[ds]? (?:a )?token|"
-                    r"signature (?:bypass|verification)|privilege escalation"),
+    ("auth-bypass", (r"authentication bypass|authori[sz]ation bypass|forge[ds]? (?:a )?token|"
+                    r"signature (?:bypass|verification)|privilege escalation")),
     ("injection", r"sql injection|nosql injection|injection|xxe|xml external entit"),
-    ("path-traversal", r"path traversal|directory traversal|zip slip|arbitrary file "
-                       r"(?:write|read|overwrite)"),
+    ("path-traversal", (r"path traversal|directory traversal|zip slip|arbitrary file "
+                       r"(?:write|read|overwrite)")),
     ("ssrf", r"server-side request forgery|\bssrf\b"),
     ("prototype-pollution", r"prototype pollution"),
     ("xss", r"cross[- ]site scripting|\bxss\b"),
-    ("crypto-weakness", r"entropy|predictable|weak (?:random|crypto|hash)|insecure random|"
-                        r"timing attack"),
-    ("data-exposure", r"information (?:exposure|disclosure|leak)|sensitive (?:data|information)|"
-                      r"leak"),
+    ("crypto-weakness", (r"entropy|predictable|weak (?:random|crypto|hash)|insecure random|"
+                        r"timing attack")),
+    ("data-exposure", (r"information (?:exposure|disclosure|leak)|sensitive (?:data|information)|"
+                      r"leak")),
     ("open-redirect", r"open redirect"),
     ("request-smuggling", r"request smuggling"),
-    ("dos", r"denial of service|\bdos\b|redos|regular expression|resource exhaustion|"
-            r"uncontrolled (?:resource|recursion)|infinite loop|crash"),
+    ("dos", (r"denial of service|\bdos\b|redos|regular expression|resource exhaustion|"
+            r"uncontrolled (?:resource|recursion)|infinite loop|crash")),
 ]
 
 # Severity the impact class carries when the vulnerable code is reachable without auth.

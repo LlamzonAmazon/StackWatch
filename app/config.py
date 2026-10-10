@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
+
 import yaml
+
 
 def get_env(key: str, default: str | None = None) -> str | None:
     return os.environ.get(key, default)

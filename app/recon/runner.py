@@ -37,7 +37,7 @@ def save(kb: KnowledgeBase, emit: Emit | None = None) -> None:
             return
     try:
         store.insert_knowledge(kb.run_id, kb.target_id, kb.status, doc)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - persistence and collector failures are reported, not raised
         if emit:
             emit("discovery", "warn", f"Knowledge snapshot not saved: {e}", None)
 
@@ -75,7 +75,7 @@ def build_knowledge(kb: KnowledgeBase, emit: Emit) -> list[FetchedPage]:
                 result = fut.result()
                 if isinstance(result, list):
                     pages.extend(result)
-            except Exception as e:  # collectors should not raise; this is a backstop
+            except Exception as e:  # noqa: BLE001 - persistence and collector failures are reported, not raised
                 kb.coverage[name] = "failed"
                 emit("discovery", "warn", f"Collector {name} crashed: {e}", None)
             save(kb, emit)

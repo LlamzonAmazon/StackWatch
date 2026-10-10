@@ -1,7 +1,6 @@
-from app.discovery.repo import discover_repo
 from app.discovery.public import discover_public
-
-from app.schema import Target, StackItem, Emit
+from app.discovery.repo import discover_repo
+from app.schema import Emit, StackItem, Target
 
 
 def discover(target: Target, run_id: str, emit: Emit) -> list[StackItem]:

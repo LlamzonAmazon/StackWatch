@@ -1,5 +1,6 @@
 import hashlib
 
+
 def _hash_id(*parts: str) -> str:
     joined = "|".join(parts)
     return hashlib.sha1(joined.encode()).hexdigest()[:16]

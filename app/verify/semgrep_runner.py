@@ -10,7 +10,6 @@ import yaml
 
 from app.schema import Emit
 
-
 RULES_DIR = Path(__file__).resolve().parents[2] / "rules"
 REGISTRY_FILE = RULES_DIR / "registry.yaml"
 VENV_SEMGREP = RULES_DIR.parent / ".venv" / "bin" / "semgrep"
@@ -35,7 +34,7 @@ def load_registry(emit: Emit) -> dict[str, str]:
     try:
         data = yaml.safe_load(REGISTRY_FILE.read_text()) or {}
         return data.get("advisories", {})
-    except Exception as e:
+    except (OSError, yaml.YAMLError, AttributeError) as e:
         emit("verification", "warn", f"Failed to load registry: {e}", None)
         return {}
 
@@ -84,6 +83,7 @@ def run_semgrep(
             capture_output=True,
             text=True,
             timeout=60,
+            check=False,
         )
 
         if result.returncode not in (0, 1):  # 0 = no findings, 1 = findings
@@ -124,7 +124,7 @@ def run_semgrep(
     except FileNotFoundError:
         emit("verification", "warn", "Semgrep not installed", None)
         return {"_error": {"detail": "Semgrep not installed", "source_url": None}}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - semgrep failure yields an inconclusive result
         emit("verification", "warn", f"Semgrep error: {e}", None)
         return {"_error": {"detail": f"Semgrep error: {e}", "source_url": None}}
 

@@ -102,6 +102,6 @@ def collect_rdap(kb: KnowledgeBase, emit: Emit) -> None:
         emit("discovery", "info",
              f"RDAP: registrar={info.get('registrar') or 'unknown'}, "
              f"created={(info.get('created') or '?')[:10]}", None)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - collector failure degrades coverage
         kb.coverage["rdap"] = "failed"
         emit("discovery", "warn", f"RDAP collector failed: {e}", None)

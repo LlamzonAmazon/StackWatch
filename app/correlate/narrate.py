@@ -118,7 +118,7 @@ def refine_with_model(findings: list[Finding], client, model: str, emit) -> int:
                           {"role": "user", "content": _prompt(f)}],
             )
             data = _json(resp.choices[0].message.content)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - LLM narration is best effort
             emit("report", "warn", f"Narration failed for {f.package}: {e}", None)
             continue
         fields = validate(data, f)
@@ -149,7 +149,7 @@ def validate(data: dict, f: Finding) -> dict[str, str]:
     allowed_files = {s.label for s in f.path if s.kind == "file"}
     allowed_files |= {s.detail.split("called at ", 1)[-1].rsplit(":", 1)[0]
                       for s in f.path if s.kind == "call"}
-    allowed_routes = {s.label.split(" ", 1)[-1] for s in f.path if s.kind in ("route",)}
+    allowed_routes = {s.label.split(" ", 1)[-1] for s in f.path if s.kind == "route"}
     allowed_routes |= {s.label for s in f.path if s.kind == "endpoint"}
     out: dict[str, str] = {}
     for key, limit in (("title", 120), ("attacker_gets", 400), ("how_reachable", 500)):
@@ -164,7 +164,7 @@ def validate(data: dict, f: Finding) -> dict[str, str]:
         routes = set(ROUTE_TOKEN.findall(text))
         if not routes <= allowed_routes:
             continue
-        if f.reach != "exposed" and re.search(r"without (?:any )?auth", text, re.I):
+        if f.reach != "exposed" and re.search(r"without (?:any )?auth", text, re.IGNORECASE):
             continue
         out[key] = text
     return out

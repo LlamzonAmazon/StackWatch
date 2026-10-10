@@ -1,22 +1,20 @@
 """ClickHouse storage layer."""
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import clickhouse_connect
 from clickhouse_connect.driver.client import Client
 
 from app.config import (
+    CLICKHOUSE_DATABASE,
     CLICKHOUSE_HOST,
+    CLICKHOUSE_PASSWORD,
     CLICKHOUSE_PORT,
     CLICKHOUSE_USER,
-    CLICKHOUSE_PASSWORD,
-    CLICKHOUSE_DATABASE,
 )
-from app.schema import (
-    Target, Run, StackItem, Advisory, Candidate, Verification, Event
-)
+from app.schema import Advisory, Candidate, Event, Run, StackItem, Target, Verification
 
 _client: Client | None = None
 _last_query_latency_ms: float = 0.0
@@ -50,7 +48,7 @@ def _serialize_json(obj: Any) -> str:
 
 
 def _ts(dt: datetime | None) -> datetime:
-    return dt or datetime.utcnow()
+    return dt or datetime.now(UTC).replace(tzinfo=None)
 
 
 # Insert functions (batch)
@@ -86,7 +84,7 @@ def insert_run(run: Run) -> None:
             _ts(run.started_ts),
             run.finished_ts,
             run.error,
-            datetime.utcnow(),
+            datetime.now(UTC).replace(tzinfo=None),
         ]],
         column_names=[
             "run_id", "target_id", "trigger", "state", "verification_authorized",
@@ -251,7 +249,7 @@ def insert_knowledge(run_id: str, target_id: str, status: str, doc: str) -> None
     """Append a knowledge base snapshot; readers take the latest ts for the run."""
     get_client().insert(
         "knowledge",
-        [[run_id, target_id, datetime.utcnow(), status, doc]],
+        [[run_id, target_id, datetime.now(UTC).replace(tzinfo=None), status, doc]],
         column_names=["run_id", "target_id", "ts", "status", "doc"],
     )
 

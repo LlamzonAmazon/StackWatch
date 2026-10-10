@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-import app.config as config
+from app import config
 from app.schema import Candidate, StackItem, Target
 from app.verify import _determine_status, verify
 from app.verify import presence as presence_mod
@@ -454,7 +454,7 @@ def test_shipped_rule_hits_its_snippet(rule_file):
     assert snippet, f"no test snippet found for {rule_file}"
     proc = subprocess.run(
         ["semgrep", "scan", "--json", "--metrics=off", "--config", str(rule_path), str(snippet)],
-        capture_output=True, text=True, timeout=120)
+        capture_output=True, text=True, timeout=120, check=False)
     assert proc.returncode in (0, 1), proc.stderr
     results = json.loads(proc.stdout)["results"]
     assert results, f"{rule_file} did not match {snippet}"

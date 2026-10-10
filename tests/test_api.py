@@ -1,7 +1,7 @@
 """API tests: FastAPI routes over ASGI with ClickHouse and the orchestrator mocked out."""
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
@@ -10,9 +10,7 @@ import pytest
 
 pytest.importorskip("clickhouse_connect", reason="project deps not installed; see SECURITY_AUDIT.md for setup")
 
-import app.config as config  # noqa: E402
-import app.main as main
-from app import auth, orchestrator
+from app import auth, config, main, orchestrator
 from app.schema import Target
 
 PINNED = "t_juiceshop"
@@ -176,7 +174,7 @@ async def test_existing_unpinned_target_cannot_be_hijacked(client, targets):
 
 
 async def test_hijack_check_also_consults_clickhouse(client, ch):
-    ch.on("FROM targets FINAL", [("t_old", "public", "o", "a.com", "", "", datetime.utcnow())])
+    ch.on("FROM targets FINAL", [("t_old", "public", "o", "a.com", "", "", datetime.now(UTC).replace(tzinfo=None))])
     r = await client.post("/api/targets", json={"target_id": "t_old", "kind": "public",
                                                 "name": "x", "domain": "b.com"})
     assert r.status_code == 409
@@ -309,7 +307,7 @@ async def test_report_joins_evidence_chain(client, ch):
     assert f1["summary"] == "Prototype pollution" and f1["replayed"] is True
     assert f2["verification_status"] == "inconclusive"
     assert f2["advisory_url"] is None and f2["package"] is None
-    for sql, params in ch.calls:
+    for sql, _params in ch.calls:
         assert RUN_ID not in sql  # always bound as a parameter, never interpolated
 
 
@@ -357,7 +355,7 @@ async def test_replay_hidden_outside_demo_mode(client, monkeypatch):
 
 
 async def test_replay_in_demo_mode(client, monkeypatch, targets):
-    import app.intel.watcher as watcher
+    from app.intel import watcher
     monkeypatch.setattr(main, "DEMO_MODE", True)
     release = MagicMock(side_effect=[True, False])
     poll = MagicMock()

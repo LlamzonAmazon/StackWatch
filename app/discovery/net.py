@@ -154,7 +154,7 @@ def fetch_page(
             emit("discovery", "warn", f"Too many redirects: {url}", None)
             return None
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - fetch failure is reported and skipped
         emit("discovery", "warn", f"Fetch failed: {url} ({e})", None)
         return None
 

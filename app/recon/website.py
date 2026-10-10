@@ -441,7 +441,7 @@ def collect_website(kb: KnowledgeBase, emit: Emit) -> list[FetchedPage]:
              f"Website: {len(pages)} pages, title={kb.web.get('title')!r}, "
              f"company={kb.company.get('name')!r}", None)
         return pages
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - collector failure degrades coverage
         kb.coverage["website"] = "failed"
         emit("discovery", "warn", f"Website collector failed: {e}", None)
         return []
@@ -589,7 +589,7 @@ def probe_subdomains(kb: KnowledgeBase, emit: Emit, limit: int = 8) -> list[Fetc
                             page.final_url, "medium")
         emit("discovery", "info",
              f"Probed {len(targets)} flagged subdomains, {len(pages)} responded", None)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - collector failure degrades coverage
         emit("discovery", "warn", f"Subdomain probe failed: {e}", None)
     return pages
 

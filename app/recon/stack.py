@@ -44,8 +44,10 @@ THIRD_PARTY = [
 
 def derive_stack(kb: KnowledgeBase) -> None:
     site = kb.web.get("final_url") or f"https://{kb.domain}/"
-    add = lambda name, cat, ev, src, conf="high", ver=None: kb.add_tech(Tech(
-        name=name, category=cat, version=ver, confidence=conf, evidence=ev, source=src))
+
+    def add(name, cat, ev, src, conf="high", ver=None):
+        kb.add_tech(Tech(
+            name=name, category=cat, version=ver, confidence=conf, evidence=ev, source=src))
 
     if kb.infra.get("hosting"):
         asns = ", ".join(sorted({f"AS{i.get('asn')}" for i in kb.infra.get("ips") or []

@@ -24,5 +24,5 @@ def is_available() -> tuple[bool, str]:
         if ids and LLM_MODEL not in ids:
             return False, f"model {LLM_MODEL} is not loaded at {LLM_BASE_URL}"
         return True, LLM_MODEL
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - health probe, any failure means unreachable
         return False, f"{LLM_BASE_URL} unreachable ({type(e).__name__})"

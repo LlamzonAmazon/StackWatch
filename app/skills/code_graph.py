@@ -32,10 +32,10 @@ BUILTINS = {
 
 IMPORT_FROM = re.compile(
     r"""^[ \t]*import\s+(?:type\s+)?(?P<clause>[^'";]+?)\s+from\s+['"](?P<mod>[^'"]+)['"]""",
-    re.M)
-IMPORT_BARE = re.compile(r"""^[ \t]*import\s+['"](?P<mod>[^'"]+)['"]""", re.M)
+    re.MULTILINE)
+IMPORT_BARE = re.compile(r"""^[ \t]*import\s+['"](?P<mod>[^'"]+)['"]""", re.MULTILINE)
 IMPORT_EQ = re.compile(
-    r"""^[ \t]*import\s+(?P<name>[\w$]+)\s*=\s*require\(\s*['"](?P<mod>[^'"]+)['"]\s*\)""", re.M)
+    r"""^[ \t]*import\s+(?P<name>[\w$]+)\s*=\s*require\(\s*['"](?P<mod>[^'"]+)['"]\s*\)""", re.MULTILINE)
 REQUIRE_ASSIGN = re.compile(
     r"""\b(?:const|let|var)\s+(?P<lhs>[\w$]+|\{[^}]*\})\s*=\s*require\(\s*['"](?P<mod>[^'"]+)"""
     r"""['"]\s*\)(?P<member>(?:\.[\w$]+)*)""")
@@ -50,7 +50,7 @@ ROUTE_CALL = re.compile(
 DEFAULT_RECEIVERS = {"app", "router", "server", "api", "routes", "apiRouter"}
 CALLEE = re.compile(r"""^\s*(?:new\s+)?(?P<head>[\w$]+)(?P<members>(?:\s*\.\s*[\w$]+)*)""")
 IDENT = re.compile(r"[A-Za-z_$][\w$]*")
-STRING = re.compile(r"""^\s*(['"`])(?P<s>(?:\\.|(?!\1).)*)\1\s*$""", re.S)
+STRING = re.compile(r"""^\s*(['"`])(?P<s>(?:\\.|(?!\1).)*)\1\s*$""", re.DOTALL)
 STATIC_DIR = re.compile(
     r"""\b(?:serveIndex|serveStatic|static)\s*\(\s*(?:path\s*\.\s*(?:resolve|join)\s*\(\s*)?"""
     r"""(?:__dirname\s*,\s*)?['"](?P<dir>[^'"]+)['"]""")

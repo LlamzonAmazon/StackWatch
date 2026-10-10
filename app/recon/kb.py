@@ -5,7 +5,7 @@ the agent appends `facts` and `agent.steps`, and the cross-reference fills `inte
 Snapshots are persisted as JSON so the UI can watch the KB grow during a run.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -162,4 +162,4 @@ class KnowledgeBase(BaseModel):
         self.stack.append(tech)
 
     def touch(self) -> None:
-        self.updated_ts = datetime.utcnow()
+        self.updated_ts = datetime.now(UTC).replace(tzinfo=None)

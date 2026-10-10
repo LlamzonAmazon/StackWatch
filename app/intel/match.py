@@ -1,12 +1,11 @@
 """Advisory matching with semver range checking."""
 
-from datetime import datetime
 
 import semver
 
-from app.schema import StackItem, Advisory, Candidate, Emit
 from app.ids import candidate_id
-from app.intel.osv import query_batch, fetch_advisories_batch
+from app.intel.osv import fetch_advisories_batch, query_batch
+from app.schema import Advisory, Candidate, Emit, StackItem
 
 
 def match_stack_items(
@@ -196,12 +195,9 @@ def _version_in_range(version: str, r) -> bool:
             return True
 
         # If fixed or last_affected was set and we passed those checks, it's affected
-        if fixed or last_affected:
-            return True
+        return bool(fixed or last_affected)
 
-        return False
-
-    except Exception:
+    except Exception:  # noqa: BLE001 - unparseable ranges are treated as not affected
         return False
 
 
@@ -211,8 +207,7 @@ def _normalize_version(v: str) -> str | None:
         return None
 
     # Remove leading 'v'
-    if v.startswith("v"):
-        v = v[1:]
+    v = v.removeprefix("v")
 
     # Handle versions like "1.0" -> "1.0.0"
     parts = v.split(".")
@@ -230,7 +225,7 @@ def _normalize_version(v: str) -> str | None:
     parts = base.split(".")
     try:
         return ".".join(str(int(p)) for p in parts[:3])
-    except:
+    except ValueError:
         return None
 
 

@@ -3,20 +3,20 @@
 
 import io
 import json
+
+# Add parent to path for imports
+import sys
 import time
 import zipfile
 from pathlib import Path
 
 import httpx
 
-# Add parent to path for imports
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from app.intel.severity import compute_severity
 from app.schema import Advisory, AffectedRange
 from app.store import insert_advisories
-from app.intel.severity import compute_severity
-
 
 OSV_NPM_URL = "https://osv-vulnerabilities.storage.googleapis.com/npm/all.zip"
 
@@ -46,7 +46,7 @@ def main():
                 adv = parse_osv_advisory(vuln)
                 if adv:
                     advisories.append(adv)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - skip a bad file, keep loading
                 print(f"Failed to parse {name}: {e}")
 
     print(f"Parsed {len(advisories)} npm advisories")
@@ -109,18 +109,18 @@ def parse_osv_advisory(data: dict) -> Advisory | None:
         from datetime import datetime
         published = modified = withdrawn = None
 
-        for field, var_name in [("published", "published"), ("modified", "modified"), ("withdrawn", "withdrawn")]:
+        for field in ("published", "modified", "withdrawn"):
             val = data.get(field)
             if val:
                 try:
-                    dt = datetime.fromisoformat(val.replace("Z", "+00:00"))
+                    dt = datetime.fromisoformat(val)
                     if field == "published":
                         published = dt
                     elif field == "modified":
                         modified = dt
                     else:
                         withdrawn = dt
-                except:
+                except (ValueError, AttributeError):
                     pass
 
         return Advisory(
@@ -139,7 +139,7 @@ def parse_osv_advisory(data: dict) -> Advisory | None:
             source="osv",
             source_url=f"https://osv.dev/vulnerability/{advisory_id}",
         )
-    except:
+    except Exception:  # noqa: BLE001 - skip any malformed advisory, keep loading the corpus
         return None
 
 

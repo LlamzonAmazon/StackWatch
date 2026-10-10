@@ -154,7 +154,7 @@ def render_document(kb: KnowledgeBase) -> str:
         _line("Social profiles", c.get("socials")),
     ])
 
-    facts = [f for f in kb.facts if f.category not in ("stack",)]
+    facts = [f for f in kb.facts if f.category != "stack"]
     if facts:
         out += [f"## Facts about {kb.domain} with sources", ""]
         for f in facts:

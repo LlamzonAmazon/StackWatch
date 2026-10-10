@@ -9,7 +9,7 @@ import pytest
 pytest.importorskip("cvss", reason="project deps not installed; see SECURITY_AUDIT.md for setup")
 pytest.importorskip("semver", reason="project deps not installed; see SECURITY_AUDIT.md for setup")
 
-import app.config as config  # noqa: E402
+from app import config
 from app.intel import explain, match, osv, severity, watcher
 from app.intel.match import _match_item_to_advisory, _normalize_version, _version_in_range
 from app.orchestrator import _inventory_hash, _risk_score
@@ -291,9 +291,9 @@ def test_inventory_hash_is_order_independent():
 # LLM explanation guardrail
 
 def _cand(**kw):
-    base = dict(id="c1", run_id=RUN, target_id=TID, stack_item_id="s1",
-                advisory_id="GHSA-xxxx-yyyy-zzzz", affected_range=">=0.0.0 <4.17.21",
-                fixed_version="4.17.21")
+    base = {"id": "c1", "run_id": RUN, "target_id": TID, "stack_item_id": "s1",
+            "advisory_id": "GHSA-xxxx-yyyy-zzzz", "affected_range": ">=0.0.0 <4.17.21",
+            "fixed_version": "4.17.21"}
     return Candidate(**{**base, **kw})
 
 

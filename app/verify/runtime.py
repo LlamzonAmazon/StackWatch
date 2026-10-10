@@ -55,7 +55,7 @@ def check_runtime(
             if server or powered_by:
                 emit("verification", "info", f"Server: {server}, X-Powered-By: {powered_by}", None)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - runtime check is best effort
         emit("verification", "warn", f"Runtime check failed: {e}", None)
 
     return results

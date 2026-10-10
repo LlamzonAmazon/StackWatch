@@ -1,15 +1,14 @@
-from app.verify.presence import check_presence
-from app.verify.semgrep_runner import run_semgrep, load_registry
-from app.verify.runtime import check_runtime
-
-from app.schema import Target, StackItem, Advisory, Candidate, Verification, Evidence, Emit
-from app.ids import verification_id
 from app.config import (
     get_allowed_hosts,
     is_repo_authorized,
     is_target_authorized,
     resolve_repo_path,
 )
+from app.ids import verification_id
+from app.schema import Advisory, Candidate, Emit, Evidence, StackItem, Target, Verification
+from app.verify.presence import check_presence
+from app.verify.runtime import check_runtime
+from app.verify.semgrep_runner import load_registry, run_semgrep
 
 
 def verify(

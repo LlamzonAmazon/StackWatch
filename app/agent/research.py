@@ -115,7 +115,7 @@ def research(kb: KnowledgeBase, pages: list[FetchedPage], emit: Emit, save, clie
         emit("discovery", "info",
              f"Research agent finished: {added} sourced facts, {agent.rejected} rejected as "
              f"unsupported, {len(sources)} sources read", None)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - agent failure degrades coverage, never fails the run
         kb.coverage["agent"] = "partial" if kb.facts else "failed"
         _log(kb, "error", f"{type(e).__name__}: {e}"[:300], None)
         emit("discovery", "warn", f"Research agent stopped: {e}", None)
@@ -256,7 +256,9 @@ def grounded(quote: str, text: str) -> bool:
     """The quote must appear in the source (case and whitespace insensitive)."""
     if len(quote.split()) < 3:
         return False
-    norm = lambda s: re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+    def norm(s: str) -> str:
+        return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+
     return norm(quote) in norm(text)
 
 
