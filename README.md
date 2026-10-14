@@ -2,35 +2,62 @@
 
 [![CI](https://github.com/LlamzonAmazon/StackWatch/actions/workflows/ci.yml/badge.svg)](https://github.com/LlamzonAmazon/StackWatch/actions/workflows/ci.yml)
 
-StackWatch is an exposure agent. Point it at a public domain or a connected repository and it answers three questions: what is this target running, which published vulnerabilities affect it, and which of those are actually reachable.
-
-It inventories the stack (lockfiles, live site assets, DNS, TLS, mail security, certificate transparency), matches every resolved `package@version` against OSV advisories with deterministic semver logic (and fingerprinted server software against NVD by CPE), flags CVEs on the CISA KEV list and ranks by EPSS, and then tries to prove or rule out each match with Semgrep reachability rules and scoped runtime checks. Every finding links to the evidence that produced it.
+StackWatch is an automated threat-intelligence and penetration-testing team for a software stack. Point it at a public domain or a repository and it maps what the target runs, matches that inventory against published vulnerabilities and live exploitation data, and tests each match from an attacker's side before ranking it. Every finding links to the evidence that produced it.
 
 ## How it works
 
+A run moves through five stages. Each agent and skill does one job and writes what it observes to a shared exposure graph. Only the correlator turns that graph into findings, so every finding traces back to an observation.
+
+### 1. Recon: map the target
+
+- Public domains get passive reconnaissance: DNS, mail security (SPF, DMARC, MTA-STS, DKIM), RDAP and hosting, TLS, certificate-transparency subdomains, and the site's own pages and JavaScript bundles.
+- A research agent reads what recon fetched and builds a profile of the company behind the domain. Agent inference runs on Mistral models (Ministral 3 8B by default), served locally through Ollama, with read-only tools scoped to the target domain.
+- Every fact the agent records must quote its source page verbatim. Facts without a matching quote are rejected.
+
+### 2. Inventory: what it runs
+
+- Repositories are read from their npm lockfile (v1 to v3), so every dependency resolves to an exact version.
+- Public domains are fingerprinted from what they already serve: server headers, generator tags, asset filenames, CDN paths and bundle license banners.
+
+### 3. Threat intelligence: what affects it
+
+- Each `package@version` is matched against OSV advisories with deterministic semver ranges. Fingerprinted server software is matched against the NVD by CPE.
+- Every match with a CVE is checked against the CISA Known Exploited Vulnerabilities catalog and scored with EPSS, the probability of exploitation in the next 30 days.
+- Matching is deterministic code. The language model never decides whether a finding exists.
+
+### 4. Red team: how an attacker would use it
+
+- Scans the repository for exposed secrets, typosquat-like package names, shell or network calls in install scripts, and registry credentials committed in `.npmrc`.
+- Enumerates the attack surface of an authorized deployment: routes from `robots.txt`, sitemaps and pages, API and admin endpoints, and well-known sensitive paths such as `/.env` and `/.git/config`.
+- Chains findings from every stage into named attack paths mapped to MITRE ATT&CK techniques, each with a written narrative.
+- Proves or rules out each match on targets you authorize in `config/demo.yaml`. Semgrep rules check whether the vulnerable call is actually made, and read-only runtime checks probe the live deployment. A confirmed match moves from `present` to `verified`.
+
+### 5. Correlation: what is real risk
+
+- The correlator scores reach (is the vulnerable component on a live route?), severity and novelty. A finding listed in CISA KEV or with an EPSS score of 0.5 or higher moves up one severity level when the package is actually used.
+- Each finding carries a claim strength: `present` (version in range), `reachable` (on a route) or `verified` (confirmed by Semgrep or a runtime check).
+- Runs, events, advisories and findings are stored in ClickHouse and shown in the web console with the full evidence chain.
+
+Connected repositories stay monitored. A watcher re-runs them on an interval and replays newly published advisories against stored inventories without rediscovering the stack.
+
 ```mermaid
 flowchart LR
-    T[Target<br/>domain or repo] --> D[Discovery<br/>lockfiles, site assets]
-    T --> R[Recon<br/>DNS, TLS, RDAP, CT, site scrape]
-    R --> A[Research agent<br/>local LLM, quote-grounded]
-    D --> S[Skills<br/>dependencies, code graph,<br/>live endpoints, exposures]
-    R --> S
-    S --> G[Exposure graph]
-    G --> C[Correlator<br/>reach, severity, novelty]
-    C --> V[Verification<br/>Semgrep, runtime checks]
-    V --> F[Findings + evidence]
+    T[Target<br/>domain or repo] --> R[Recon<br/>DNS, TLS, RDAP, CT, site]
+    T --> I[Inventory<br/>lockfiles, fingerprints]
+    R --> A[Research agent<br/>Mistral via Ollama,<br/>quote-grounded]
+    R --> I
     A --> KB[Knowledge base]
-    R --> KB
-    F --> CH[(ClickHouse<br/>runs, events, advisories)]
+    I --> TI[Threat intel<br/>OSV, NVD, KEV, EPSS]
+    I --> RT[Red team<br/>secrets, endpoints,<br/>attack chains]
+    TI --> G[Exposure graph]
+    RT --> G
+    G --> C[Correlator<br/>reach, severity, novelty]
+    C --> V[Verification<br/>Semgrep, runtime checks<br/>authorized targets only]
+    V --> F[Findings + evidence]
+    F --> CH[(ClickHouse)]
     KB --> CH
     CH --> UI[Web console]
 ```
-
-1. **Discovery and recon** build an inventory. Repositories are read from their lockfile (v1 to v3); public domains are fingerprinted passively from what they serve, including versions from headers, asset names and bundle banners.
-2. **Skills** each observe one thing and add nodes and edges to an exposure graph. No skill emits findings on its own.
-3. **The correlator** joins the graph into findings, scoring reach (is the vulnerable component on a route?), severity, novelty and exploitation signals (CISA KEV, EPSS), and assembles multi-step attack chains.
-4. **Verification** runs only on targets listed in `config/demo.yaml` as authorized. A Semgrep match upgrades a finding from `present` to `verified`.
-5. **The watcher** re-runs connected repositories on an interval and replays new advisories against stored inventories.
 
 More detail: [docs/architecture.md](docs/architecture.md).
 
