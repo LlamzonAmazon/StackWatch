@@ -79,4 +79,10 @@ Runs end to end on local infrastructure. Not deployed. [docs/outstanding.md](doc
 
 ## Credits
 
-Built by Thomas Llamzon (agent infrastructure and full stack), with Andres (agent web scraping) and Sid (adversarial pentesting). This repository is a fresh history of the team codebase; [docs/goals.md](docs/goals.md#contributions) has the breakdown.
+StackWatch began as a team build at the SF Tech Week Cyberdefense Hackathon in October 2026. The original codebase is at [AndresPedrerosC/Cyberdefense-Hackathon](https://github.com/AndresPedrerosC/Cyberdefense-Hackathon). This repository adopts it, with a fresh history, for presentation purposes.
+
+- **Thomas Llamzon** ([@LlamzonAmazon](https://github.com/LlamzonAmazon)): agent infrastructure and the full stack.
+- **Andres** ([@AndresPedrerosC](https://github.com/AndresPedrerosC)): the agent's web scraping.
+- **Sid** ([@inSideos-designs](https://github.com/inSideos-designs)): adversarial pentesting.
+
+[docs/goals.md](docs/goals.md#contributions) has the full breakdown.
