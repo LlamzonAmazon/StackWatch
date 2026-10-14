@@ -6,15 +6,25 @@ StackWatch is an automated threat-intelligence and penetration-testing team for 
 
 ## How it works
 
-**Recon** maps the target passively: DNS, mail security, TLS, RDAP, certificate-transparency subdomains and the site itself. A research agent running **Mistral models locally through Ollama** profiles the company, and every fact it keeps must quote its source verbatim.
+### Reconnaissance
 
-**Inventory** resolves what the target runs to exact versions, from npm lockfiles for repositories or from headers, asset names and bundle banners for live sites.
+StackWatch maps the target passively: DNS, mail security, TLS, RDAP, certificate-transparency subdomains and the site itself. A research agent running **Mistral models locally through Ollama** profiles the company, and every fact it keeps must quote its source verbatim.
 
-**Threat intelligence** matches that inventory against **OSV** and the **NVD** with deterministic version ranges, then flags CVEs in **CISA KEV** and scores them with **EPSS**. The model never decides whether a finding exists.
+### Inventory
 
-**Red team** looks at the target the way an attacker would: exposed secrets, typosquat-like packages, risky install scripts, sensitive endpoints, and **attack chains mapped to MITRE ATT&CK**. On targets you authorize, **Semgrep** and read-only runtime checks confirm whether a vulnerability is actually reachable.
+Everything the target runs is resolved to an exact version, from npm lockfiles for repositories or from headers, asset names and bundle banners for live sites.
 
-**Correlation** ranks what is left by reach, severity and exploitation signals, and labels each finding `present`, `reachable` or `verified` with its evidence attached. Connected repositories are re-checked automatically as new advisories are published.
+### Threat Intelligence
+
+The inventory is matched against **OSV** and the **NVD** with deterministic version ranges, and matching CVEs are flagged in **CISA KEV** and scored with **EPSS**. The model never decides whether a finding exists.
+
+### Adversarial Red-Teaming
+
+StackWatch then looks at the target the way an attacker would: exposed secrets, typosquat-like packages, risky install scripts, sensitive endpoints, and **attack chains mapped to MITRE ATT&CK**. On targets you authorize, **Semgrep** and read-only runtime checks confirm whether a vulnerability is actually reachable.
+
+### Correlation
+
+Findings are ranked by reach, severity and exploitation signals, and each is labeled `present`, `reachable` or `verified` with its evidence attached. Connected repositories are re-checked automatically as new advisories are published.
 
 ```mermaid
 flowchart LR
